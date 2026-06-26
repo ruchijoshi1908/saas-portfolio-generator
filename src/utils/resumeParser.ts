@@ -1,275 +1,496 @@
-// Mock AI Resume Parser for CareerLaunch AI
-// Simulates AI parsing with sample data extraction
-// Ready for future OpenAI integration
+// Resume Parser for CareerLaunch AI
+// Extracts text from PDF resumes and parses into structured data
 
+import * as pdfjsLib from 'pdfjs-dist';
 import { ResumeData, emptyResumeData } from './resumeTypes';
 
-// ============================================================================
-// MOCK AI EXTRACTION - SAMPLE DATA
-// ============================================================================
-
-// Sample professional profiles for simulating AI extraction
-const sampleProfiles = [
-  {
-    fullName: 'Sarah Chen',
-    professionalTitle: 'Senior Software Engineer',
-    email: 'sarah.chen@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    linkedinUrl: 'https://linkedin.com/in/sarahchen',
-    githubUrl: 'https://github.com/sarahchen',
-    portfolioUrl: 'https://sarahchen.dev',
-    summary: 'Passionate software engineer with 5+ years of experience building scalable web applications. Specialized in React, Node.js, and cloud technologies. Led development of enterprise applications serving millions of users.',
-    skills: ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Docker', 'PostgreSQL', 'GraphQL', 'Git', 'Agile'],
-    education: [
-      {
-        institution: 'Stanford University',
-        degree: 'Master of Science',
-        field: 'Computer Science',
-        startDate: '2016',
-        endDate: '2018',
-        gpa: '3.9',
-        location: 'Stanford, CA',
-      },
-      {
-        institution: 'UC Berkeley',
-        degree: 'Bachelor of Science',
-        field: 'Computer Science',
-        startDate: '2012',
-        endDate: '2016',
-        gpa: '3.7',
-        location: 'Berkeley, CA',
-      },
-    ],
-    workExperience: [
-      {
-        company: 'TechCorp Inc.',
-        title: 'Senior Software Engineer',
-        startDate: 'Jan 2021',
-        endDate: 'Present',
-        location: 'San Francisco, CA',
-        description: 'Leading development of cloud-native applications.',
-        highlights: [
-          'Architected microservices platform handling 10M+ daily requests',
-          'Led team of 5 engineers on critical payment processing system',
-          'Reduced infrastructure costs by 40% through optimization',
-          'Implemented CI/CD pipeline reducing deployment time by 60%',
-        ],
-      },
-      {
-        company: 'StartupXYZ',
-        title: 'Software Engineer',
-        startDate: 'Jun 2018',
-        endDate: 'Dec 2020',
-        location: 'Mountain View, CA',
-        description: 'Full-stack development for B2B SaaS platform.',
-        highlights: [
-          'Built real-time collaboration features used by 50K+ users',
-          'Developed REST APIs serving 5M requests/day',
-          'Improved application performance by 45%',
-        ],
-      },
-    ],
-    projects: [
-      {
-        name: 'CloudDev Platform',
-        description: 'Developer productivity platform with real-time code collaboration, integrated CI/CD, and deployment management.',
-        technologies: ['React', 'Node.js', 'WebSocket', 'Docker', 'AWS'],
-        url: 'https://github.com/sarahchen/clouddev',
-      },
-      {
-        name: 'DataFlow Analytics',
-        description: 'Real-time data visualization dashboard for business intelligence with custom charting library.',
-        technologies: ['TypeScript', 'D3.js', 'Python', 'PostgreSQL'],
-        url: 'https://github.com/sarahchen/dataflow',
-      },
-      {
-        name: 'TaskMaster Pro',
-        description: 'AI-powered task management application with natural language processing for task creation.',
-        technologies: ['React', 'OpenAI API', 'Firebase', 'Tailwind CSS'],
-        url: 'https://taskmaster-pro.com',
-      },
-    ],
-    certifications: [
-      { name: 'AWS Solutions Architect Professional', issuer: 'Amazon Web Services', date: '2023', credentialId: 'AWS-SAP-12345' },
-      { name: 'Google Cloud Professional Developer', issuer: 'Google Cloud', date: '2022', credentialId: 'GCP-PD-67890' },
-    ],
-    achievements: [
-      { title: 'Hackathon Winner', description: 'First place at TechCrunch Disrupt 2022', date: '2022' },
-      { title: 'Open Source Contributor', description: '500+ contributions to major open source projects', date: '2023' },
-    ],
-    languages: ['English', 'Mandarin Chinese', 'Spanish'],
-  },
-  {
-    fullName: 'Marcus Johnson',
-    professionalTitle: 'Full Stack Developer',
-    email: 'marcus.j@email.com',
-    phone: '+1 (555) 987-6543',
-    location: 'Austin, TX',
-    linkedinUrl: 'https://linkedin.com/in/marcusjohnson',
-    githubUrl: 'https://github.com/marcusdev',
-    portfolioUrl: 'https://marcusdev.io',
-    summary: 'Full stack developer passionate about creating intuitive user experiences and robust backend systems. Experienced in building e-commerce platforms, fintech applications, and real-time systems.',
-    skills: ['JavaScript', 'React', 'Vue.js', 'Python', 'Django', 'MongoDB', 'Redis', 'Kubernetes', 'Linux', 'SQL'],
-    education: [
-      {
-        institution: 'UT Austin',
-        degree: 'Bachelor of Science',
-        field: 'Software Engineering',
-        startDate: '2015',
-        endDate: '2019',
-        location: 'Austin, TX',
-      },
-    ],
-    workExperience: [
-      {
-        company: 'FinanceTech LLC',
-        title: 'Full Stack Developer',
-        startDate: 'Mar 2021',
-        endDate: 'Present',
-        location: 'Austin, TX',
-        description: 'Developing fintech applications for payment processing.',
-        highlights: [
-          'Built payment processing system handling $50M monthly transactions',
-          'Implemented fraud detection algorithms reducing chargebacks by 30%',
-          'Led migration from legacy system to modern stack',
-        ],
-      },
-      {
-        company: 'E-Commerce Solutions',
-        title: 'Frontend Developer',
-        startDate: 'Aug 2019',
-        endDate: 'Feb 2021',
-        location: 'Austin, TX',
-        description: 'Frontend development for enterprise e-commerce platform.',
-        highlights: [
-          'Redesigned checkout flow increasing conversion by 25%',
-          'Implemented A/B testing framework',
-          'Optimized page load times from 4s to 1.2s',
-        ],
-      },
-    ],
-    projects: [
-      {
-        name: 'FinanceTracker',
-        description: 'Personal finance management app with budgeting, investment tracking, and AI-powered spending insights.',
-        technologies: ['React', 'Python', 'TensorFlow', 'PostgreSQL'],
-        url: 'https://github.com/marcusdev/financetracker',
-      },
-      {
-        name: 'CodeCollab',
-        description: 'Real-time code collaboration platform with video chat and shared whiteboard functionality.',
-        technologies: ['Vue.js', 'Node.js', 'WebRTC', 'Socket.io'],
-        url: 'https://codecollab.io',
-      },
-    ],
-    certifications: [
-      { name: 'Certified Kubernetes Administrator', issuer: 'CNCF', date: '2023', credentialId: 'CKA-11111' },
-    ],
-    achievements: [
-      { title: 'Tech Speaker', description: 'Speaker at React Conf 2023 on state management', date: '2023' },
-    ],
-    languages: ['English', 'Portuguese'],
-  },
-  {
-    fullName: 'Emily Rodriguez',
-    professionalTitle: 'UX Engineer',
-    email: 'emily.r@email.com',
-    phone: '+1 (555) 456-7890',
-    location: 'New York, NY',
-    linkedinUrl: 'https://linkedin.com/in/emilyrodriguez',
-    githubUrl: 'https://github.com/emilyux',
-    portfolioUrl: 'https://emilyux.design',
-    summary: 'UX Engineer bridging the gap between design and development. Passionate about creating accessible, performant, and beautiful digital experiences. Skilled in both design thinking and front-end development.',
-    skills: ['Figma', 'React', 'CSS/SASS', 'Motion Design', 'User Research', 'Accessibility', 'Tailwind CSS', 'Framer', 'Storybook', 'Design Systems'],
-    education: [
-      {
-        institution: 'Parsons School of Design',
-        degree: 'Master of Fine Arts',
-        field: 'Design and Technology',
-        startDate: '2017',
-        endDate: '2019',
-        location: 'New York, NY',
-      },
-      {
-        institution: 'NYU',
-        degree: 'Bachelor of Arts',
-        field: 'Interactive Media',
-        startDate: '2013',
-        endDate: '2017',
-        location: 'New York, NY',
-      },
-    ],
-    workExperience: [
-      {
-        company: 'DesignStudio Pro',
-        title: 'Senior UX Engineer',
-        startDate: 'Jun 2021',
-        endDate: 'Present',
-        location: 'New York, NY',
-        description: 'Leading design system development and UX engineering.',
-        highlights: [
-          'Created design system used by 200+ designers and developers',
-          'Improved accessibility scores to 98% Lighthouse rating',
-          'Reduced design-to-code handoff time by 50%',
-        ],
-      },
-      {
-        company: 'Creative Agency',
-        title: 'Frontend Developer',
-        startDate: 'Jan 2019',
-        endDate: 'May 2021',
-        location: 'New York, NY',
-        description: 'Frontend development for high-profile client projects.',
-        highlights: [
-          'Developed award-winning website for Fortune 500 client',
-          'Implemented advanced animations and interactions',
-          'Mentored junior developers on best practices',
-        ],
-      },
-    ],
-    projects: [
-      {
-        name: 'DesignTokens System',
-        description: 'Comprehensive design tokens library with automatic code generation for multiple platforms.',
-        technologies: ['Figma', 'Style Dictionary', 'JSON', 'TypeScript'],
-        url: 'https://github.com/emilyux/designtokens',
-      },
-      {
-        name: 'Accessible UI Kit',
-        description: 'WCAG-compliant React component library with built-in accessibility features.',
-        technologies: ['React', 'TypeScript', 'Tailwind CSS', 'Testing Library'],
-        url: 'https://accessible-ui.kit',
-      },
-    ],
-    certifications: [
-      { name: 'Certified UX Professional', issuer: 'UXQB', date: '2022', credentialId: 'CUXP-22222' },
-    ],
-    achievements: [
-      { title: 'Awwwards Site of the Day', description: 'Won Site of the Day for portfolio website redesign', date: '2023' },
-      { title: 'Design Systems Contributor', description: 'Contributed to major design system open source projects', date: '2022' },
-    ],
-    languages: ['English', 'Spanish'],
-  },
-];
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 // ============================================================================
-// SIMULATED PARSING FUNCTIONS
+// PDF TEXT EXTRACTION
 // ============================================================================
 
 /**
- * Simulates AI parsing of a resume file
- * In production, this would call OpenAI API or similar
+ * Extract raw text from a PDF file
+ */
+async function extractTextFromPDF(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+
+    const pageText = textContent.items
+      .map((item: any) => item.str)
+      .join(' ');
+
+    fullText += pageText + '\n';
+  }
+
+  return fullText.trim();
+}
+
+// ============================================================================
+// TEXT PARSING UTILITIES
+// ============================================================================
+
+/**
+ * Extract email from text
+ */
+function extractEmail(text: string): string {
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi;
+  const match = text.match(emailRegex);
+  return match ? match[0] : '';
+}
+
+/**
+ * Extract phone number from text
+ */
+function extractPhone(text: string): string {
+  const phonePatterns = [
+    /\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g,
+    /\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g,
+  ];
+
+  for (const pattern of phonePatterns) {
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  return '';
+}
+
+/**
+ * Extract LinkedIn URL from text
+ */
+function extractLinkedInUrl(text: string): string {
+  const linkedinRegex = /(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+/gi;
+  const match = text.match(linkedinRegex);
+  return match ? match[0] : '';
+}
+
+/**
+ * Extract GitHub URL from text
+ */
+function extractGitHubUrl(text: string): string {
+  const githubRegex = /(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9-]+/gi;
+  const match = text.match(githubRegex);
+  return match ? match[0] : '';
+}
+
+/**
+ * Extract portfolio/website URL from text
+ */
+function extractPortfolioUrl(text: string): string {
+  // Look for personal website URLs (exclude linkedin, github, facebook, twitter)
+  const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/gi;
+  const excludeDomains = ['linkedin.com', 'github.com', 'facebook.com', 'twitter.com', 'instagram.com'];
+
+  const matches = text.match(urlRegex);
+  if (matches) {
+    for (const url of matches) {
+      const domain = url.toLowerCase();
+      if (!excludeDomains.some(d => domain.includes(d))) {
+        return url.startsWith('http') ? url : `https://${url}`;
+      }
+    }
+  }
+  return '';
+}
+
+/**
+ * Extract name (usually first line or prominent text)
+ */
+function extractName(text: string): string {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+  // Name is often the first non-empty line, or line before contact info
+  for (let i = 0; i < Math.min(3, lines.length); i++) {
+    const line = lines[i];
+    // Check if line looks like a name (words, no numbers, reasonable length)
+    if (line.length > 2 && line.length < 50 && /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(line)) {
+      return line;
+    }
+  }
+
+  // Fallback: first line if it's short enough
+  if (lines.length > 0 && lines[0].length < 50) {
+    return lines[0];
+  }
+
+  return '';
+}
+
+/**
+ * Extract location/city from text
+ */
+function extractLocation(text: string): string {
+  const locationPatterns = [
+    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z]{2})/g,  // City, ST
+    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?,\s*[A-Z][a-z]+)/g, // City, State
+  ];
+
+  for (const pattern of locationPatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      // Filter out common false positives like company locations in job descriptions
+      const potentialLocation = match[0];
+      if (!potentialLocation.toLowerCase().includes('university') &&
+          !potentialLocation.toLowerCase().includes('inc') &&
+          !potentialLocation.toLowerCase().includes('corp')) {
+        return potentialLocation;
+      }
+    }
+  }
+  return '';
+}
+
+/**
+ * Extract professional title/summary
+ */
+function extractTitle(text: string): string {
+  const titleKeywords = [
+    'software engineer', 'developer', 'frontend', 'backend', 'full stack',
+    'designer', 'manager', 'analyst', 'engineer', 'architect', 'consultant',
+    'specialist', 'lead', 'senior', 'junior', 'intern', 'director',
+    'data scientist', 'product manager', 'project manager', 'devops',
+    'ux', 'ui', 'mobile', 'web', 'qa', 'test', 'security'
+  ];
+
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+    if (line.length < 60 && titleKeywords.some(kw => lowerLine.includes(kw))) {
+      // Likely a title line
+      return line;
+    }
+  }
+
+  return '';
+}
+
+/**
+ * Extract skills from text
+ */
+function extractSkills(text: string): string[] {
+  const skillKeywords = [
+    // Languages
+    'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'ruby', 'go', 'rust',
+    'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'sql', 'html', 'css',
+    // Frameworks & Libraries
+    'react', 'angular', 'vue', 'node.js', 'nodejs', 'express', 'django', 'flask',
+    'spring', 'rails', 'asp.net', 'next.js', 'nextjs', 'svelte', 'jquery',
+    'bootstrap', 'tailwind', 'sass', 'less', 'redux', 'mobx', 'graphql',
+    // Cloud & DevOps
+    'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'jenkins', 'git', 'github',
+    'gitlab', 'ci/cd', 'terraform', 'ansible', 'linux', 'unix', 'bash',
+    // Databases
+    'mongodb', 'postgresql', 'mysql', 'redis', 'elasticsearch', 'firebase',
+    'supabase', 'oracle', 'sqlite', 'dynamodb', 'cassandra',
+    // Tools
+    'figma', 'sketch', 'photoshop', 'illustrator', 'xd', 'vs code', 'vim',
+    'intellij', 'eclipse', 'jira', 'confluence', 'slack', 'notion',
+    // Concepts
+    'agile', 'scrum', 'rest api', 'microservices', 'machine learning', 'ai',
+    'testing', 'tdd', 'bdd', 'oop', 'functional programming',
+  ];
+
+  const lowerText = text.toLowerCase();
+  const foundSkills: string[] = [];
+
+  for (const skill of skillKeywords) {
+    if (lowerText.includes(skill.toLowerCase())) {
+      // Capitalize properly
+      const capitalized = skill.charAt(0).toUpperCase() + skill.slice(1);
+      if (!foundSkills.includes(capitalized)) {
+        foundSkills.push(capitalized);
+      }
+    }
+  }
+
+  // Also look for "Skills:" section and extract from there
+  const skillsSectionMatch = text.match(/skills?:?\s*[\n:]\s*([\s\S]*?)(?=\n\n|\n[a-z]+:|$)/i);
+  if (skillsSectionMatch) {
+    const skillsText = skillsSectionMatch[1];
+    // Split by common delimiters
+    const items = skillsText.split(/[,•|]/).map(s => s.trim()).filter(s => s.length > 1 && s.length < 30);
+    for (const item of items) {
+      if (!foundSkills.some(s => s.toLowerCase() === item.toLowerCase())) {
+        foundSkills.push(item);
+      }
+    }
+  }
+
+  return foundSkills.slice(0, 15); // Limit to 15 skills
+}
+
+/**
+ * Extract work experience
+ */
+function extractWorkExperience(text: string): ResumeData['workExperience'] {
+  const experiences: ResumeData['workExperience'] = [];
+
+  // Look for experience section
+  const expSectionMatch = text.match(/(?:work\s*)?experience:?\s*[\n]([\s\S]*?)(?=\n\s*(?:education|skills|projects|certifications?|achievements?|$))/i);
+
+  const expText = expSectionMatch ? expSectionMatch[1] : text;
+
+  // Look for date patterns and extract around them
+  const datePattern = /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4})\s*[\|\–—-]*\s*(?:Present|Current|Now|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{4})/gi;
+
+  const lines = expText.split('\n');
+  let currentExp: any = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Check if line contains a date pattern (likely a job)
+    const dateMatch = line.match(datePattern);
+    if (dateMatch) {
+      // Save previous experience
+      if (currentExp && currentExp.company) {
+        experiences.push(currentExp);
+      }
+
+      // Start new experience
+      const dateStr = dateMatch[0];
+      const dateParts = dateStr.split(/[\|\–—-]/).map(s => s.trim());
+
+      // Try to extract company and title from lines before/around date
+      let companyLine = '';
+      let titleLine = '';
+
+      // Look at current line and previous lines
+      const contextLine = i > 0 ? lines[i-1].trim() : '';
+      if (contextLine && !contextLine.match(datePattern)) {
+        // Check if it's a title or company
+        if (/engineer|developer|manager|designer|analyst|architect/i.test(contextLine)) {
+          titleLine = contextLine;
+          companyLine = i > 1 ? lines[i-2].trim() : '';
+        } else {
+          companyLine = contextLine;
+        }
+      }
+
+      currentExp = {
+        company: companyLine || '',
+        title: titleLine || line.replace(dateStr, '').replace(/[\|\–—-]/g, '').trim(),
+        startDate: dateParts[0] || '',
+        endDate: dateParts[1] || dateParts[0] || '',
+        location: '',
+        description: '',
+        highlights: [],
+      };
+    } else if (currentExp) {
+      // Add description/highlights
+      if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+        currentExp.highlights.push(line.replace(/^[•\-*]\s*/, ''));
+      } else if (line.length > 10 && !currentExp.description) {
+        currentExp.description = line;
+      }
+    }
+  }
+
+  // Save last experience
+  if (currentExp && currentExp.company) {
+    experiences.push(currentExp);
+  }
+
+  return experiences.slice(0, 5); // Limit to 5 experiences
+}
+
+/**
+ * Extract education
+ */
+function extractEducation(text: string): ResumeData['education'] {
+  const educationItems: ResumeData['education'] = [];
+
+  // Look for education section
+  const eduPattern = /education:?\s*[\n]([\s\S]*?)(?=\n\s*(?:experience|skills|projects|certifications?|achievements?|$))/i;
+  const eduMatch = text.match(eduPattern);
+
+  if (!eduMatch) return educationItems;
+
+  const eduText = eduMatch[1];
+
+  // Look for university/college names and degrees
+  const universityPattern = /([A-Z][a-zA-Z\s&]+(?:University|College|Institute|School))\s*[\n,]?\s*([^\n]*)/g;
+
+  let match;
+  while ((match = universityPattern.exec(eduText)) !== null) {
+    const institution = match[1].trim();
+    const degreeInfo = match[2].trim();
+
+    // Extract degree type
+    const degreeTypes = ['Bachelor', 'Master', 'PhD', 'Doctor', 'Associate', 'B.S.', 'B.A.', 'M.S.', 'M.A.', 'MBA'];
+    let degree = '';
+    for (const dt of degreeTypes) {
+      if (degreeInfo.toLowerCase().includes(dt.toLowerCase())) {
+        degree = dt;
+        break;
+      }
+    }
+
+    // Extract year
+    const yearMatch = degreeInfo.match(/\b(19|20)\d{2}\b/);
+    const years = yearMatch ? yearMatch[0] : '';
+
+    educationItems.push({
+      institution,
+      degree: degree || degreeInfo.split(',')[0] || '',
+      field: degreeInfo.replace(/^(Bachelor|Master|PhD|Doctor|Associate|B\.S\.|B\.A\.|M\.S\.|M\.A\.|MBA)\s*(of\s*)?(Science|Arts|Engineering|Business|Technology)?\s*(in\s*)?/i, '').split(',')[0].trim(),
+      startDate: years ? String(parseInt(years) - 4) : '',
+      endDate: years || '',
+      gpa: '',
+      location: '',
+    });
+  }
+
+  return educationItems.slice(0, 3); // Limit to 3 education entries
+}
+
+/**
+ * Extract projects
+ */
+function extractProjects(text: string): ResumeData['projects'] {
+  const projects: ResumeData['projects'] = [];
+
+  // Look for projects section
+  const projectPattern = /projects?:?\s*[\n]([\s\S]*?)(?=\n\s*(?:experience|education|skills|certifications?|achievements?|$))/i;
+  const projectMatch = text.match(projectPattern);
+
+  if (!projectMatch) return projects;
+
+  const projText = projectMatch[1];
+  const lines = projText.split('\n').map(l => l.trim()).filter(l => l);
+
+  let currentProject: any = null;
+
+  for (const line of lines) {
+    // Skip bullet points that are part of descriptions
+    if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+      if (currentProject) {
+        currentProject.description += ' ' + line.replace(/^[•\-*]\s*/, '');
+      }
+      continue;
+    }
+
+    // New project likely starts with a name/title
+    if (line.length < 60 && !line.startsWith('http')) {
+      // Save previous project
+      if (currentProject) {
+        projects.push(currentProject);
+      }
+
+      currentProject = {
+        name: line.replace(/[:|\–—-].*$/, '').trim(),
+        description: '',
+        technologies: [],
+        url: '',
+      };
+
+      // Check for tech stack mentions in the line
+      const techKeywords = ['React', 'Vue', 'Angular', 'Node', 'Python', 'Java', 'TypeScript', 'JavaScript', 'AWS', 'Docker', 'MongoDB', 'PostgreSQL'];
+      for (const tech of techKeywords) {
+        if (line.toLowerCase().includes(tech.toLowerCase())) {
+          currentProject.technologies.push(tech);
+        }
+      }
+    } else if (currentProject) {
+      // Description or URL
+      if (line.includes('http') || line.includes('github.com')) {
+        currentProject.url = line;
+      } else if (line.length > 20) {
+        currentProject.description = line;
+      }
+    }
+  }
+
+  // Save last project
+  if (currentProject) {
+    projects.push(currentProject);
+  }
+
+  return projects.slice(0, 5); // Limit to 5 projects
+}
+
+/**
+ * Extract certifications
+ */
+function extractCertifications(text: string): ResumeData['certifications'] {
+  const certifications: ResumeData['certifications'] = [];
+
+  // Look for certifications section
+  const certPattern = /certifications?:?\s*[\n]([\s\S]*?)(?=\n\s*(?:experience|education|skills|projects|achievements?|$))/i;
+  const certMatch = text.match(certPattern);
+
+  if (!certMatch) return certifications;
+
+  const certText = certMatch[1];
+  const lines = certText.split('\n').map(l => l.trim()).filter(l => l);
+
+  for (const line of lines) {
+    // Skip empty or bullet-only lines
+    if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+      const certName = line.replace(/^[•\-*]\s*/, '');
+      if (certName.length > 2) {
+        certifications.push({
+          name: certName.split(/[–—-]/)[0].trim(),
+          issuer: '',
+          date: '',
+          credentialId: '',
+        });
+      }
+    } else if (line.length > 3 && line.length < 100) {
+      certifications.push({
+        name: line.split(/[–—-]/)[0].trim(),
+        issuer: '',
+        date: '',
+        credentialId: '',
+      });
+    }
+  }
+
+  return certifications.slice(0, 5); // Limit to 5 certifications
+}
+
+/**
+ * Extract summary/objective
+ */
+function extractSummary(text: string): string {
+  // Look for summary/objective section
+  const summaryPattern = /(?:summary|objective|profile|about):?\s*[\n]([\s\S]*?)(?=\n\s*(?:experience|education|skills|projects))/i;
+  const match = text.match(summaryPattern);
+
+  if (match) {
+    return match[1].trim().substring(0, 500); // Limit to 500 chars
+  }
+
+  // Fallback: first substantial paragraph
+  const paragraphs = text.split('\n\n').filter(p => p.length > 50);
+  if (paragraphs.length > 0) {
+    return paragraphs[0].trim().substring(0, 500);
+  }
+
+  return '';
+}
+
+// ============================================================================
+// MAIN PARSING FUNCTION
+// ============================================================================
+
+/**
+ * Parse a resume file and extract structured data
  *
- * @param file - The uploaded file (simulated)
+ * @param file - The uploaded resume file (PDF or DOCX)
  * @returns Promise<ResumeData> - Extracted resume data
  */
 export async function parseResume(file: File): Promise<ResumeData> {
-  // Simulate network delay for parsing
-  const parseDelay = 1500 + Math.random() * 1000;
-
-  await new Promise(resolve => setTimeout(resolve, parseDelay));
-
   // Validate file type
   const validExtensions = ['.pdf', '.docx', '.doc'];
   const hasValidExtension = validExtensions.some(ext =>
@@ -285,52 +506,65 @@ export async function parseResume(file: File): Promise<ResumeData> {
     throw new Error('File size exceeds 10MB limit. Please upload a smaller file.');
   }
 
-  // For now, return random sample profile
-  // In production, this would send the file to an AI API
-  const randomProfile = sampleProfiles[Math.floor(Math.random() * sampleProfiles.length)];
+  // Only support PDF for now (DOCX requires additional library)
+  if (!file.name.toLowerCase().endsWith('.pdf')) {
+    throw new Error('Currently only PDF files are supported. Please upload a PDF resume.');
+  }
 
-  // Determine confidence based on simulated extraction quality
-  const confidence: 'high' | 'medium' | 'low' = Math.random() > 0.3 ? 'high' : Math.random() > 0.5 ? 'medium' : 'low';
+  let extractedText: string;
 
-  return {
+  try {
+    // Extract text from PDF
+    extractedText = await extractTextFromPDF(file);
+
+    // LOG THE EXTRACTED TEXT TO CONSOLE FOR VERIFICATION
+    console.log('='.repeat(80));
+    console.log('EXTRACTED RESUME TEXT:');
+    console.log('='.repeat(80));
+    console.log(extractedText);
+    console.log('='.repeat(80));
+
+    if (!extractedText || extractedText.trim().length < 20) {
+      throw new Error('Could not extract text from PDF. The PDF may be image-based or corrupted.');
+    }
+
+  } catch (error) {
+    console.error('PDF extraction error:', error);
+    throw new Error(`Failed to read PDF: ${error instanceof Error ? error.message : 'Unknown error'}. Please ensure the PDF is text-based and not password protected.`);
+  }
+
+  // Parse extracted text into structured data
+  const resumeData: ResumeData = {
     ...emptyResumeData,
-    fullName: randomProfile.fullName,
-    professionalTitle: randomProfile.professionalTitle,
-    email: randomProfile.email,
-    phone: randomProfile.phone,
-    location: randomProfile.location,
-    linkedinUrl: randomProfile.linkedinUrl,
-    githubUrl: randomProfile.githubUrl,
-    portfolioUrl: randomProfile.portfolioUrl,
-    summary: randomProfile.summary,
-    skills: randomProfile.skills,
-    education: randomProfile.education,
-    workExperience: randomProfile.workExperience,
-    projects: randomProfile.projects,
-    certifications: randomProfile.certifications,
-    achievements: randomProfile.achievements,
-    languages: randomProfile.languages,
-    rawText: `[Simulated extracted text from ${file.name}]`,
-    extractionConfidence: confidence,
+    fullName: extractName(extractedText),
+    professionalTitle: extractTitle(extractedText),
+    email: extractEmail(extractedText),
+    phone: extractPhone(extractedText),
+    location: extractLocation(extractedText),
+    linkedinUrl: extractLinkedInUrl(extractedText),
+    githubUrl: extractGitHubUrl(extractedText),
+    portfolioUrl: extractPortfolioUrl(extractedText),
+    summary: extractSummary(extractedText),
+    skills: extractSkills(extractedText),
+    education: extractEducation(extractedText),
+    workExperience: extractWorkExperience(extractedText),
+    projects: extractProjects(extractedText),
+    certifications: extractCertifications(extractedText),
+    achievements: [],
+    languages: [],
+    rawText: extractedText,
+    extractionConfidence: extractedText.length > 500 ? 'high' : extractedText.length > 200 ? 'medium' : 'low',
   };
-}
 
-/**
- * Future: Integrate with OpenAI API for actual resume parsing
- *
- * Example integration:
- * async function parseResumeWithAI(file: File): Promise<ResumeData> {
- *   const formData = new FormData();
- *   formData.append('file', file);
- *
- *   const response = await fetch('/api/parse-resume', {
- *     method: 'POST',
- *     body: formData,
- *   });
- *
- *   return await response.json();
- * }
- */
+  // LOG PARSED DATA FOR VERIFICATION
+  console.log('='.repeat(80));
+  console.log('PARSED RESUME DATA:');
+  console.log('='.repeat(80));
+  console.log(JSON.stringify(resumeData, null, 2));
+  console.log('='.repeat(80));
+
+  return resumeData;
+}
 
 // Export types for external use
 export type { ResumeData };
