@@ -11,6 +11,7 @@ import {
   Target,
   Sparkles,
   ChevronRight,
+  Compass,
 } from 'lucide-react';
 import { ResumeData } from '../utils/resumeTypes';
 import {
@@ -24,13 +25,14 @@ interface JobReadinessScoreProps {
   portfolioGenerated?: boolean;
   onViewPortfolio?: () => void;
   onImproveProfile?: () => void;
+  onViewCareerCoach?: () => void;
 }
 
 export default function JobReadinessScore({
   resumeData,
   portfolioGenerated = false,
   onViewPortfolio,
-  onImproveProfile,
+  onViewCareerCoach,
 }: JobReadinessScoreProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
@@ -170,16 +172,16 @@ export default function JobReadinessScore({
               )}
 
               <div className="flex flex-col sm:flex-row gap-4">
-                {onViewPortfolio && (
-                  <button onClick={onViewPortfolio} className="btn-primary flex items-center justify-center gap-2">
-                    View Portfolio
-                    <ChevronRight className="w-4 h-4" />
+                {onViewCareerCoach && (
+                  <button onClick={onViewCareerCoach} className="btn-primary flex items-center justify-center gap-2">
+                    <Compass className="w-4 h-4" />
+                    Get Career Roadmap
                   </button>
                 )}
-                {onImproveProfile && result.percentage < 85 && (
-                  <button onClick={onImproveProfile} className="btn-secondary flex items-center justify-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
-                    Improve My Score
+                {onViewPortfolio && (
+                  <button onClick={onViewPortfolio} className="btn-secondary flex items-center justify-center gap-2">
+                    View Portfolio
+                    <ChevronRight className="w-4 h-4" />
                   </button>
                 )}
               </div>
