@@ -2,10 +2,12 @@
 // Extracts text from PDF resumes and parses into structured data
 
 import * as pdfjsLib from 'pdfjs-dist';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { ResumeData, emptyResumeData } from './resumeTypes';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.worker.min.js`;
+// Configure PDF.js worker - use the worker file from public folder
+// This approach works in both development and production with Vite
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 // ============================================================================
 // PDF TEXT EXTRACTION
@@ -16,7 +18,16 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
  */
 async function extractTextFromPDF(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  // Load the PDF document
+  const loadingTask = pdfjsLib.getDocument({
+    data: arrayBuffer,
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    useSystemFonts: true,
+  });
+
+  const pdf: PDFDocumentProxy = await loadingTask.promise;
 
   let fullText = '';
 
