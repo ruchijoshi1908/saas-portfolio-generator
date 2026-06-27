@@ -1,7 +1,7 @@
 // Resume Review Component - Edit extracted resume data
 // Part of CareerLaunch AI
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   User,
   Mail,
@@ -31,105 +31,44 @@ interface ResumeReviewProps {
   onBack: () => void;
 }
 
-export default function ResumeReview({
-  resumeData,
-  onResumeDataChange,
-  onGeneratePortfolio,
-  onBack,
-}: ResumeReviewProps) {
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    personal: true,
-    contact: true,
-    skills: true,
-    education: true,
-    experience: true,
-    projects: true,
-    certifications: false,
-    achievements: false,
-  });
+// Stable input component defined outside to prevent re-creation
+interface InputFieldProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  type?: string;
+}
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
-  };
+function InputField({ label, value, onChange, placeholder, type = 'text' }: InputFieldProps) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-neutral-300 mb-2">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="input-styled"
+      />
+    </div>
+  );
+}
 
-  const updateField = (field: keyof ResumeData, value: any) => {
-    onResumeDataChange({ ...resumeData, [field]: value });
-  };
+// Stable section header component
+interface SectionHeaderProps {
+  title: string;
+  section: string;
+  icon: any;
+  count?: number;
+  expanded: boolean;
+  onToggle: (section: string) => void;
+}
 
-  const addEducation = () => {
-    onResumeDataChange({
-      ...resumeData,
-      education: [...resumeData.education, { ...emptyEducation }],
-    });
-  };
-
-  const updateEducation = (index: number, field: string, value: string) => {
-    const newEducation = [...resumeData.education];
-    newEducation[index] = { ...newEducation[index], [field]: value };
-    onResumeDataChange({ ...resumeData, education: newEducation });
-  };
-
-  const removeEducation = (index: number) => {
-    onResumeDataChange({
-      ...resumeData,
-      education: resumeData.education.filter((_, i) => i !== index),
-    });
-  };
-
-  const addSkill = (skill: string) => {
-    if (skill.trim() && !resumeData.skills.includes(skill.trim())) {
-      onResumeDataChange({
-        ...resumeData,
-        skills: [...resumeData.skills, skill.trim()],
-      });
-    }
-  };
-
-  const addSkillFromInput = () => {
-    const input = document.querySelector('input[placeholder="Add a skill..."]') as HTMLInputElement;
-    if (input) {
-      addSkill(input.value);
-      input.value = '';
-    }
-  };
-
-  const removeSkill = (index: number) => {
-    onResumeDataChange({
-      ...resumeData,
-      skills: resumeData.skills.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleGenerate = () => {
-    const portfolioData = resumeToPortfolioData(resumeData);
-    onGeneratePortfolio(portfolioData);
-  };
-
-  const getCompletionPercentage = () => {
-    let filled = 0;
-    let total = 0;
-
-    if (resumeData.fullName) filled++;
-    total++;
-    if (resumeData.professionalTitle) filled++;
-    total++;
-    if (resumeData.email) filled++;
-    total++;
-    if (resumeData.summary) filled++;
-    total++;
-    if (resumeData.skills.length > 0) filled++;
-    total++;
-    if (resumeData.education.length > 0) filled++;
-    total++;
-    if (resumeData.workExperience.length > 0) filled++;
-    total++;
-
-    return Math.round((filled / total) * 100);
-  };
-
-  const SectionHeader = ({ title, section, icon: Icon, count }: { title: string; section: string; icon: any; count?: number }) => (
+function SectionHeader({ title, section, icon: Icon, count, expanded, onToggle }: SectionHeaderProps) {
+  return (
     <button
-      onClick={() => toggleSection(section)}
+      onClick={() => onToggle(section)}
       className="w-full flex items-center justify-between p-5 hover:bg-white/[0.02] transition-colors"
     >
       <div className="flex items-center gap-3">
@@ -143,26 +82,151 @@ export default function ResumeReview({
           </span>
         )}
       </div>
-      {expandedSections[section] ? (
+      {expanded ? (
         <ChevronUp className="w-5 h-5 text-neutral-500" />
       ) : (
         <ChevronDown className="w-5 h-5 text-neutral-500" />
       )}
     </button>
   );
+}
 
-  const InputField = ({ label, value, onChange, placeholder, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string }) => (
-    <div>
-      <label className="block text-sm font-medium text-neutral-300 mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="input-styled"
-      />
-    </div>
-  );
+export default function ResumeReview({
+  resumeData,
+  onResumeDataChange,
+  onGeneratePortfolio,
+  onBack,
+}: ResumeReviewProps) {
+  // Use local state for form fields to prevent focus loss during typing
+  const [localData, setLocalData] = useState<ResumeData>(resumeData);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    personal: true,
+    contact: true,
+    skills: true,
+    education: true,
+    experience: true,
+    projects: true,
+    certifications: false,
+    achievements: false,
+  });
+
+  // Sync local data when resumeData prop changes (e.g., after new upload)
+  const prevResumeDataRef = useRef(resumeData);
+  useEffect(() => {
+    // Only update if the reference changed (new upload), not on every keystroke
+    if (prevResumeDataRef.current !== resumeData) {
+      setLocalData(resumeData);
+      prevResumeDataRef.current = resumeData;
+    }
+  }, [resumeData]);
+
+  // Debounced sync back to parent
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updateLocalField = useCallback((field: keyof ResumeData, value: any) => {
+    setLocalData(prev => {
+      const newData = { ...prev, [field]: value };
+
+      // Debounce sync to parent - only sync after 300ms of no typing
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+      syncTimeoutRef.current = setTimeout(() => {
+        onResumeDataChange(newData);
+      }, 300);
+
+      return newData;
+    });
+  }, [onResumeDataChange]);
+
+  const toggleSection = useCallback((section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  }, []);
+
+  const addEducation = useCallback(() => {
+    setLocalData(prev => {
+      const newData = {
+        ...prev,
+        education: [...prev.education, { ...emptyEducation }],
+      };
+      onResumeDataChange(newData);
+      return newData;
+    });
+  }, [onResumeDataChange]);
+
+  const updateEducation = useCallback((index: number, field: string, value: string) => {
+    setLocalData(prev => {
+      const newEducation = [...prev.education];
+      newEducation[index] = { ...newEducation[index], [field]: value };
+      const newData = { ...prev, education: newEducation };
+      onResumeDataChange(newData);
+      return newData;
+    });
+  }, [onResumeDataChange]);
+
+  const removeEducation = useCallback((index: number) => {
+    setLocalData(prev => {
+      const newData = {
+        ...prev,
+        education: prev.education.filter((_, i) => i !== index),
+      };
+      onResumeDataChange(newData);
+      return newData;
+    });
+  }, [onResumeDataChange]);
+
+  const addSkill = useCallback((skill: string) => {
+    if (skill.trim() && !localData.skills.includes(skill.trim())) {
+      setLocalData(prev => {
+        const newData = {
+          ...prev,
+          skills: [...prev.skills, skill.trim()],
+        };
+        onResumeDataChange(newData);
+        return newData;
+      });
+    }
+  }, [localData.skills, onResumeDataChange]);
+
+  const removeSkill = useCallback((index: number) => {
+    setLocalData(prev => {
+      const newData = {
+        ...prev,
+        skills: prev.skills.filter((_, i) => i !== index),
+      };
+      onResumeDataChange(newData);
+      return newData;
+    });
+  }, [onResumeDataChange]);
+
+  const handleGenerate = useCallback(() => {
+    // Sync final data before generating
+    onResumeDataChange(localData);
+    const portfolioData = resumeToPortfolioData(localData);
+    onGeneratePortfolio(portfolioData);
+  }, [localData, onResumeDataChange, onGeneratePortfolio]);
+
+  const getCompletionPercentage = useCallback(() => {
+    let filled = 0;
+    let total = 0;
+
+    if (localData.fullName) filled++;
+    total++;
+    if (localData.professionalTitle) filled++;
+    total++;
+    if (localData.email) filled++;
+    total++;
+    if (localData.summary) filled++;
+    total++;
+    if (localData.skills.length > 0) filled++;
+    total++;
+    if (localData.education.length > 0) filled++;
+    total++;
+    if (localData.workExperience.length > 0) filled++;
+    total++;
+
+    return Math.round((filled / total) * 100);
+  }, [localData]);
 
   const completion = getCompletionPercentage();
 
@@ -195,18 +259,18 @@ export default function ResumeReview({
 
           {/* Confidence Banner */}
           <div className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-            resumeData.extractionConfidence === 'high' ? 'bg-green-500/10 border border-green-500/20' :
-            resumeData.extractionConfidence === 'medium' ? 'bg-yellow-500/10 border border-yellow-500/20' :
+            localData.extractionConfidence === 'high' ? 'bg-green-500/10 border border-green-500/20' :
+            localData.extractionConfidence === 'medium' ? 'bg-yellow-500/10 border border-yellow-500/20' :
             'bg-red-500/10 border border-red-500/20'
           }`}>
-            {resumeData.extractionConfidence === 'high' ? (
+            {localData.extractionConfidence === 'high' ? (
               <CheckCircle2 className="w-4 h-4 text-green-400" />
             ) : (
               <AlertTriangle className="w-4 h-4 text-yellow-400" />
             )}
             <span className="text-sm">
-              {resumeData.extractionConfidence === 'high' ? 'High confidence extraction' :
-               resumeData.extractionConfidence === 'medium' ? 'Medium confidence - please verify' :
+              {localData.extractionConfidence === 'high' ? 'High confidence extraction' :
+               localData.extractionConfidence === 'medium' ? 'Medium confidence - please verify' :
                'Low confidence - please review carefully'}
             </span>
           </div>
@@ -228,28 +292,34 @@ export default function ResumeReview({
 
         {/* Personal Information */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Personal Information" section="personal" icon={User} />
+          <SectionHeader
+            title="Personal Information"
+            section="personal"
+            icon={User}
+            expanded={expandedSections.personal}
+            onToggle={toggleSection}
+          />
           {expandedSections.personal && (
             <div className="p-5 pt-0 space-y-5">
               <div className="grid md:grid-cols-2 gap-5">
                 <InputField
                   label="Full Name"
-                  value={resumeData.fullName}
-                  onChange={(v) => updateField('fullName', v)}
+                  value={localData.fullName}
+                  onChange={(v) => updateLocalField('fullName', v)}
                   placeholder="John Doe"
                 />
                 <InputField
                   label="Professional Title"
-                  value={resumeData.professionalTitle}
-                  onChange={(v) => updateField('professionalTitle', v)}
+                  value={localData.professionalTitle}
+                  onChange={(v) => updateLocalField('professionalTitle', v)}
                   placeholder="Senior Software Engineer"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-300 mb-2">Professional Summary</label>
                 <textarea
-                  value={resumeData.summary}
-                  onChange={(e) => updateField('summary', e.target.value)}
+                  value={localData.summary}
+                  onChange={(e) => updateLocalField('summary', e.target.value)}
                   placeholder="Brief professional summary..."
                   rows={4}
                   className="input-styled resize-none"
@@ -257,8 +327,8 @@ export default function ResumeReview({
               </div>
               <InputField
                 label="Location"
-                value={resumeData.location}
-                onChange={(v) => updateField('location', v)}
+                value={localData.location}
+                onChange={(v) => updateLocalField('location', v)}
                 placeholder="San Francisco, CA"
               />
             </div>
@@ -267,21 +337,27 @@ export default function ResumeReview({
 
         {/* Contact Information */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Contact Information" section="contact" icon={Mail} />
+          <SectionHeader
+            title="Contact Information"
+            section="contact"
+            icon={Mail}
+            expanded={expandedSections.contact}
+            onToggle={toggleSection}
+          />
           {expandedSections.contact && (
             <div className="p-5 pt-0 space-y-5">
               <div className="grid md:grid-cols-2 gap-5">
                 <InputField
                   label="Email"
-                  value={resumeData.email}
-                  onChange={(v) => updateField('email', v)}
+                  value={localData.email}
+                  onChange={(v) => updateLocalField('email', v)}
                   placeholder="john@example.com"
                   type="email"
                 />
                 <InputField
                   label="Phone"
-                  value={resumeData.phone}
-                  onChange={(v) => updateField('phone', v)}
+                  value={localData.phone}
+                  onChange={(v) => updateLocalField('phone', v)}
                   placeholder="+1 (555) 123-4567"
                   type="tel"
                 />
@@ -289,20 +365,20 @@ export default function ResumeReview({
               <div className="grid md:grid-cols-3 gap-5">
                 <InputField
                   label="LinkedIn"
-                  value={resumeData.linkedinUrl}
-                  onChange={(v) => updateField('linkedinUrl', v)}
+                  value={localData.linkedinUrl}
+                  onChange={(v) => updateLocalField('linkedinUrl', v)}
                   placeholder="https://linkedin.com/in/johndoe"
                 />
                 <InputField
                   label="GitHub"
-                  value={resumeData.githubUrl}
-                  onChange={(v) => updateField('githubUrl', v)}
+                  value={localData.githubUrl}
+                  onChange={(v) => updateLocalField('githubUrl', v)}
                   placeholder="https://github.com/johndoe"
                 />
                 <InputField
                   label="Portfolio"
-                  value={resumeData.portfolioUrl}
-                  onChange={(v) => updateField('portfolioUrl', v)}
+                  value={localData.portfolioUrl}
+                  onChange={(v) => updateLocalField('portfolioUrl', v)}
                   placeholder="https://johndoe.com"
                 />
               </div>
@@ -312,11 +388,18 @@ export default function ResumeReview({
 
         {/* Skills */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Skills" section="skills" icon={Code2} count={resumeData.skills.length} />
+          <SectionHeader
+            title="Skills"
+            section="skills"
+            icon={Code2}
+            count={localData.skills.length}
+            expanded={expandedSections.skills}
+            onToggle={toggleSection}
+          />
           {expandedSections.skills && (
             <div className="p-5 pt-0">
               <div className="flex flex-wrap gap-2 mb-4">
-                {resumeData.skills.map((skill, index) => (
+                {localData.skills.map((skill, index) => (
                   <span
                     key={index}
                     className="px-4 py-2 rounded-xl bg-primary-500/10 border border-primary-500/20 text-primary-300 flex items-center gap-2 group"
@@ -345,7 +428,13 @@ export default function ResumeReview({
                 />
                 <button
                   type="button"
-                  onClick={addSkillFromInput}
+                  onClick={(e) => {
+                    const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                    if (input) {
+                      addSkill(input.value);
+                      input.value = '';
+                    }
+                  }}
                   className="btn-secondary px-4"
                 >
                   <Plus className="w-4 h-4" />
@@ -357,10 +446,17 @@ export default function ResumeReview({
 
         {/* Education */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Education" section="education" icon={GraduationCap} count={resumeData.education.length} />
+          <SectionHeader
+            title="Education"
+            section="education"
+            icon={GraduationCap}
+            count={localData.education.length}
+            expanded={expandedSections.education}
+            onToggle={toggleSection}
+          />
           {expandedSections.education && (
             <div className="p-5 pt-0 space-y-4">
-              {resumeData.education.map((edu, index) => (
+              {localData.education.map((edu, index) => (
                 <div key={index} className="glass rounded-xl p-5">
                   <div className="flex justify-between items-start mb-4">
                     <h4 className="font-medium text-neutral-300">Education {index + 1}</h4>
@@ -422,15 +518,22 @@ export default function ResumeReview({
 
         {/* Work Experience */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Work Experience" section="experience" icon={Briefcase} count={resumeData.workExperience.length} />
+          <SectionHeader
+            title="Work Experience"
+            section="experience"
+            icon={Briefcase}
+            count={localData.workExperience.length}
+            expanded={expandedSections.experience}
+            onToggle={toggleSection}
+          />
           {expandedSections.experience && (
             <div className="p-5 pt-0">
               <p className="text-neutral-500 text-sm">
-                {resumeData.workExperience.length} position(s) extracted
+                {localData.workExperience.length} position(s) extracted
               </p>
-              {resumeData.workExperience.map((exp, index) => (
+              {localData.workExperience.map((exp, index) => (
                 <div key={index} className="glass rounded-xl p-5 mt-4">
-                  <h4 className="font-medium text-neutral-300">{exp.title}</h4>
+                  <h4 className="font-medium text-neutral-300">{exp.title || 'Untitled Position'}</h4>
                   <p className="text-neutral-500 text-sm">{exp.company}</p>
                   <p className="text-neutral-600 text-xs">{exp.startDate} - {exp.endDate}</p>
                   {exp.highlights.length > 0 && (
@@ -451,12 +554,19 @@ export default function ResumeReview({
 
         {/* Projects */}
         <div className="card-premium overflow-hidden mb-6">
-          <SectionHeader title="Projects" section="projects" icon={FolderKanban} count={resumeData.projects.length} />
+          <SectionHeader
+            title="Projects"
+            section="projects"
+            icon={FolderKanban}
+            count={localData.projects.length}
+            expanded={expandedSections.projects}
+            onToggle={toggleSection}
+          />
           {expandedSections.projects && (
             <div className="p-5 pt-0 space-y-4">
-              {resumeData.projects.map((project, index) => (
+              {localData.projects.map((project, index) => (
                 <div key={index} className="glass rounded-xl p-5">
-                  <h4 className="font-medium text-neutral-300">{project.name}</h4>
+                  <h4 className="font-medium text-neutral-300">{project.name || 'Untitled Project'}</h4>
                   <p className="text-neutral-500 text-sm mb-2">{project.description}</p>
                   {project.technologies.length > 0 && (
                     <div className="flex flex-wrap gap-2">
@@ -474,12 +584,19 @@ export default function ResumeReview({
         </div>
 
         {/* Certifications */}
-        {resumeData.certifications.length > 0 && (
+        {localData.certifications.length > 0 && (
           <div className="card-premium overflow-hidden mb-6">
-            <SectionHeader title="Certifications" section="certifications" icon={Award} count={resumeData.certifications.length} />
+            <SectionHeader
+              title="Certifications"
+              section="certifications"
+              icon={Award}
+              count={localData.certifications.length}
+              expanded={expandedSections.certifications}
+              onToggle={toggleSection}
+            />
             {expandedSections.certifications && (
               <div className="p-5 pt-0">
-                {resumeData.certifications.map((cert, index) => (
+                {localData.certifications.map((cert, index) => (
                   <div key={index} className="glass rounded-xl p-4 mb-2">
                     <h4 className="font-medium text-neutral-300">{cert.name}</h4>
                     <p className="text-neutral-500 text-sm">{cert.issuer}</p>
@@ -491,12 +608,19 @@ export default function ResumeReview({
         )}
 
         {/* Achievements */}
-        {resumeData.achievements.length > 0 && (
+        {localData.achievements.length > 0 && (
           <div className="card-premium overflow-hidden mb-6">
-            <SectionHeader title="Achievements" section="achievements" icon={Trophy} count={resumeData.achievements.length} />
+            <SectionHeader
+              title="Achievements"
+              section="achievements"
+              icon={Trophy}
+              count={localData.achievements.length}
+              expanded={expandedSections.achievements}
+              onToggle={toggleSection}
+            />
             {expandedSections.achievements && (
               <div className="p-5 pt-0">
-                {resumeData.achievements.map((achievement, index) => (
+                {localData.achievements.map((achievement, index) => (
                   <div key={index} className="glass rounded-xl p-4 mb-2">
                     <h4 className="font-medium text-neutral-300">{achievement.title}</h4>
                     <p className="text-neutral-500 text-sm">{achievement.description}</p>
