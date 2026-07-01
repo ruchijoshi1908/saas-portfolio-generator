@@ -8,6 +8,13 @@ import { JobReadinessResult, calculateJobReadinessScore } from './jobReadinessSc
 // TYPES
 // ============================================================================
 
+export interface LearningResource {
+  title: string;
+  platform: 'official' | 'freecodecamp' | 'coursera' | 'youtube' | 'other';
+  url: string;
+  isFree: boolean;
+}
+
 export interface RoadmapAction {
   id: string;
   title: string;
@@ -17,10 +24,7 @@ export interface RoadmapAction {
   estimatedDays: number;
   completed: boolean;
   impact: number; // Score improvement potential
-  resources?: {
-    title: string;
-    url?: string;
-  }[];
+  resources: LearningResource[];
 }
 
 export interface CareerPath {
@@ -29,7 +33,17 @@ export interface CareerPath {
   matchPercentage: number;
   requiredSkills: string[];
   averageSalary: string;
+  salaryRange: { entry: string; mid: string; senior: string };
   growthRate: string;
+  industryDemand: 'very_high' | 'high' | 'medium' | 'growing';
+  growthOutlook: string;
+  keySkills: string[];
+}
+
+export interface CareerTip {
+  title: string;
+  content: string;
+  category: 'interview' | 'networking' | 'skills' | 'portfolio' | 'general';
 }
 
 export interface CareerRoadmap {
@@ -52,6 +66,7 @@ export interface CareerRoadmap {
   currentScore: number;
   projectedScoreAfter: number;
   scoreImprovement: number;
+  potentialScoreIncrease: number; // Total possible from all actions
 
   // Motivation
   motivationalMessage: string;
@@ -61,7 +76,58 @@ export interface CareerRoadmap {
   actionsCompleted: number;
   totalActions: number;
   progressPercentage: number;
+  completedImpactPoints: number; // Points earned from completed actions
+
+  // Career Tips
+  careerTip: CareerTip;
 }
+
+// ============================================================================
+// HELPER DATA
+// ============================================================================
+
+const CAREER_TIPS: CareerTip[] = [
+  {
+    title: 'The Hidden Job Market',
+    content: 'Up to 80% of jobs are never posted publicly. Build genuine relationships with people in your target companies - referrals increase your chances of getting an interview by 10x.',
+    category: 'networking',
+  },
+  {
+    title: 'The STAR Method for Interviews',
+    content: 'When answering behavioral questions, use the STAR method: Situation (set the context), Task (describe your responsibility), Action (what you did), Result (the outcome with metrics).',
+    category: 'interview',
+  },
+  {
+    title: 'Continuous Learning Mindset',
+    content: 'Technology evolves rapidly. Dedicate 30-60 minutes daily to learning something new. Follow tech blogs, take online courses, and build side projects to stay current.',
+    category: 'skills',
+  },
+  {
+    title: 'Portfolio Over Resume',
+    content: 'A strong portfolio with 3-4 well-documented projects speaks louder than any resume. Employers want to see what you can build, not just what you claim to know.',
+    category: 'portfolio',
+  },
+  {
+    title: 'Salary Negotiation Timing',
+    content: 'Never discuss salary until you have a job offer. Once they want you, you have leverage. Research market rates on levels.fyi and Glassdoor beforehand.',
+    category: 'general',
+  },
+  {
+    title: 'The Power of Specialization',
+    content: 'While being a generalist has benefits, specialists often command higher salaries. Pick a niche you\'re passionate about and become known for it.',
+    category: 'skills',
+  },
+  {
+    title: 'Interview Prep Strategy',
+    content: 'For every interview, research the company\'s tech stack, recent news, and products. Prepare 3-5 thoughtful questions that show you\'ve done your homework.',
+    category: 'interview',
+  },
+  {
+    title: 'Building Your Personal Brand',
+    content: 'Share your learning journey on LinkedIn or Twitter. Write about problems you solved, projects you built, or interesting tech concepts. This builds credibility and attracts opportunities.',
+    category: 'networking',
+  },
+];
 
 // ============================================================================
 // ANALYSIS FUNCTIONS
@@ -104,6 +170,10 @@ function getLevelDescription(level: 'beginner' | 'intermediate' | 'advanced'): s
   return descriptions[level];
 }
 
+function getCareerTip(): CareerTip {
+  return CAREER_TIPS[Math.floor(Math.random() * CAREER_TIPS.length)];
+}
+
 function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath; alternatives: CareerPath[] } {
   const skills = resumeData.skills.map(s => s.toLowerCase());
   const title = resumeData.professionalTitle.toLowerCase();
@@ -120,7 +190,11 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     matchPercentage: Math.min(100, Math.round((frontendMatch / 6) * 100) + (title.includes('frontend') || title.includes('ui') ? 25 : 0)),
     requiredSkills: ['React/Vue/Angular', 'TypeScript', 'CSS/SCSS', 'Git', 'Responsive Design'],
     averageSalary: '$75,000 - $130,000',
+    salaryRange: { entry: '$60,000 - $80,000', mid: '$80,000 - $110,000', senior: '$110,000 - $150,000' },
     growthRate: '+25% (2023-2033)',
+    industryDemand: 'very_high',
+    growthOutlook: 'Excellent - Frontend development continues to evolve with new frameworks and tools',
+    keySkills: ['JavaScript/TypeScript', 'React/Vue/Angular', 'CSS Frameworks', 'Git', 'Performance Optimization'],
   });
 
   // Backend Developer
@@ -132,7 +206,11 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     matchPercentage: Math.min(100, Math.round((backendMatch / 6) * 100) + (title.includes('backend') || title.includes('api') ? 25 : 0)),
     requiredSkills: ['Python/Java/Node.js', 'SQL/NoSQL Databases', 'REST APIs', 'Cloud Services', 'System Design'],
     averageSalary: '$80,000 - $145,000',
+    salaryRange: { entry: '$65,000 - $85,000', mid: '$90,000 - $120,000', senior: '$125,000 - $170,000' },
     growthRate: '+22% (2023-2033)',
+    industryDemand: 'very_high',
+    growthOutlook: 'Strong - Backend skills are essential for every tech company',
+    keySkills: ['Python/Java/Node.js', 'Database Design', 'API Development', 'Cloud Services', 'Security'],
   });
 
   // Full Stack Developer
@@ -143,7 +221,11 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     matchPercentage: Math.min(100, fullstackMatch * 12 + (title.includes('full') ? 30 : 0)),
     requiredSkills: ['Frontend Framework', 'Backend Language', 'Databases', 'DevOps Basics', 'System Design'],
     averageSalary: '$85,000 - $150,000',
+    salaryRange: { entry: '$65,000 - $90,000', mid: '$95,000 - $130,000', senior: '$140,000 - $180,000' },
     growthRate: '+27% (2023-2033)',
+    industryDemand: 'very_high',
+    growthOutlook: 'Excellent - Full stack developers are highly valued for their versatility',
+    keySkills: ['Frontend + Backend', 'Database Management', 'DevOps Basics', 'System Design', 'Problem Solving'],
   });
 
   // Data Analyst/Scientist
@@ -155,7 +237,11 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     matchPercentage: Math.min(100, Math.round((dataMatch / 5) * 100) + (title.includes('data') ? 30 : 0)),
     requiredSkills: ['Python/R', 'SQL', 'Data Visualization', 'Statistics', 'Machine Learning'],
     averageSalary: '$70,000 - $140,000',
+    salaryRange: { entry: '$55,000 - $75,000', mid: '$80,000 - $110,000', senior: '$120,000 - $160,000' },
     growthRate: '+35% (2023-2033)',
+    industryDemand: 'high',
+    growthOutlook: 'Very Strong - AI and data science are transforming every industry',
+    keySkills: ['Python/R', 'SQL', 'Machine Learning', 'Statistics', 'Data Visualization'],
   });
 
   // DevOps Engineer
@@ -167,7 +253,11 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     matchPercentage: Math.min(100, Math.round((devopsMatch / 5) * 100) + (title.includes('devops') || title.includes('cloud') ? 30 : 0)),
     requiredSkills: ['Cloud Platforms', 'Docker/Kubernetes', 'CI/CD', 'Infrastructure as Code', 'Monitoring'],
     averageSalary: '$90,000 - $160,000',
+    salaryRange: { entry: '$70,000 - $95,000', mid: '$100,000 - $135,000', senior: '$140,000 - $185,000' },
     growthRate: '+21% (2023-2033)',
+    industryDemand: 'high',
+    growthOutlook: 'Strong - Cloud adoption continues to accelerate across industries',
+    keySkills: ['Cloud Platforms', 'Docker/Kubernetes', 'CI/CD', 'Infrastructure as Code', 'Monitoring'],
   });
 
   // Sort by match percentage
@@ -177,6 +267,57 @@ function recommendCareerPath(resumeData: ResumeData): { recommended: CareerPath;
     recommended: paths[0],
     alternatives: paths.slice(1, 3),
   };
+}
+
+function createLearningResources(skill: string): LearningResource[] {
+  const resourceMap: Record<string, LearningResource[]> = {
+    'React': [
+      { title: 'React Official Documentation', platform: 'official', url: 'https://react.dev', isFree: true },
+      { title: 'freeCodeCamp React Course', platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+      { title: 'React - The Complete Guide (Coursera)', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+      { title: 'React Tutorial for Beginners', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+    ],
+    'Python': [
+      { title: 'Python Official Documentation', platform: 'official', url: 'https://docs.python.org', isFree: true },
+      { title: 'freeCodeCamp Python Course', platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+      { title: 'Python for Everybody (Coursera)', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+      { title: 'Python Programming Tutorials', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+    ],
+    'JavaScript': [
+      { title: 'MDN JavaScript Guide', platform: 'official', url: 'https://developer.mozilla.org', isFree: true },
+      { title: 'freeCodeCamp JavaScript', platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+      { title: 'JavaScript Algorithms (Coursera)', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+      { title: 'JavaScript Crash Course', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+    ],
+    'TypeScript': [
+      { title: 'TypeScript Official Handbook', platform: 'official', url: 'https://typescriptlang.org', isFree: true },
+      { title: 'freeCodeCamp TypeScript', platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+      { title: 'TypeScript Course', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+      { title: 'TypeScript for Beginners', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+    ],
+    'Docker': [
+      { title: 'Docker Official Documentation', platform: 'official', url: 'https://docs.docker.com', isFree: true },
+      { title: 'Docker for Beginners', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+      { title: 'Docker & Kubernetes Course', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+    ],
+    'AWS': [
+      { title: 'AWS Official Training', platform: 'official', url: 'https://aws.amazon.com/training', isFree: true },
+      { title: 'AWS Tutorial for Beginners', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+      { title: 'AWS Cloud Practitioner', platform: 'coursera', url: 'https://coursera.org', isFree: false },
+    ],
+    'Git': [
+      { title: 'Git Official Documentation', platform: 'official', url: 'https://git-scm.com/doc', isFree: true },
+      { title: 'freeCodeCamp Git Course', platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+      { title: 'Git & GitHub Crash Course', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+    ],
+  };
+
+  return resourceMap[skill] || [
+    { title: `${skill} Official Documentation`, platform: 'official', url: '#', isFree: true },
+    { title: `Learn ${skill} on freeCodeCamp`, platform: 'freecodecamp', url: 'https://freecodecamp.org/learn', isFree: true },
+    { title: `${skill} Course on Coursera`, platform: 'coursera', url: 'https://coursera.org', isFree: false },
+    { title: `${skill} Tutorial on YouTube`, platform: 'youtube', url: 'https://youtube.com', isFree: true },
+  ];
 }
 
 function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessResult, level: 'beginner' | 'intermediate' | 'advanced'): RoadmapAction[] {
@@ -190,16 +331,17 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
   if (!resumeData.linkedinUrl || improvements.some(i => i.toLowerCase().includes('linkedin'))) {
     actions.push({
       id: `action-${actionId++}`,
-      title: 'Optimize your LinkedIn profile',
-      description: 'Add a professional photo, craft a compelling headline, and write a summary that highlights your unique value.',
+      title: 'Create an optimized LinkedIn profile',
+      description: 'Add a professional photo, craft a compelling headline with keywords, and write a summary that highlights your unique value proposition.',
       category: 'network',
       priority: 'high',
       estimatedDays: 2,
       completed: false,
-      impact: 5,
+      impact: 6,
       resources: [
-        { title: 'LinkedIn Profile Optimization Guide', url: '#' },
-        { title: 'Tech Professional Headline Examples', url: '#' },
+        { title: 'LinkedIn Official Guide', platform: 'official', url: 'https://linkedin.com/help', isFree: true },
+        { title: 'LinkedIn Optimization Tutorial', platform: 'youtube', url: 'https://youtube.com', isFree: true },
+        { title: 'Career Development Course', platform: 'coursera', url: 'https://coursera.org', isFree: false },
       ],
     });
   }
@@ -208,16 +350,17 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
   if (!resumeData.githubUrl || improvements.some(i => i.toLowerCase().includes('github'))) {
     actions.push({
       id: `action-${actionId++}`,
-      title: 'Build your GitHub presence',
-      description: 'Create repositories for your projects, add README files, and pin your best work. Show clean code and documentation.',
+      title: 'Build a standout GitHub profile',
+      description: 'Create repositories for your projects, write clear README files, pin your best work, and show consistent activity with meaningful commits.',
       category: 'profile',
       priority: 'high',
       estimatedDays: 3,
       completed: false,
-      impact: 5,
+      impact: 4,
       resources: [
-        { title: 'GitHub Profile README Guide', url: '#' },
-        { title: 'How to Write Great READMEs', url: '#' },
+        { title: 'GitHub Docs', platform: 'official', url: 'https://docs.github.com', isFree: true },
+        { title: 'GitHub Profile README Guide', platform: 'freecodecamp', url: 'https://freecodecamp.org', isFree: true },
+        { title: 'Git & GitHub Course', platform: 'coursera', url: 'https://coursera.org', isFree: false },
       ],
     });
   }
@@ -229,16 +372,13 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: `Build project #${projectNum}: ${skillToUse} application`,
-      description: `Create a ${(level === 'beginner') ? 'simple' : 'complex'} ${skillToUse} project that showcases your abilities. Include tests and documentation.`,
+      description: `Create a ${(level === 'beginner') ? 'simple' : 'complex'} ${skillToUse} project with full documentation, tests, and deployment. Include README, live demo, and code comments.`,
       category: 'projects',
       priority: resumeData.projects.length === 0 ? 'high' : 'medium',
       estimatedDays: level === 'beginner' ? 5 : 10,
       completed: false,
-      impact: 15,
-      resources: [
-        { title: 'Project Ideas for Developers', url: '#' },
-        { title: `${skillToUse} Tutorial Series`, url: '#' },
-      ],
+      impact: 8,
+      resources: createLearningResources(skillToUse),
     });
   }
 
@@ -248,16 +388,13 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: `Learn ${missingSkills[0]}`,
-      description: `Add ${missingSkills[0]} to your skillset. This is a highly requested skill that will boost your employability.`,
+      description: `${missingSkills[0]} is a highly requested skill in the industry. Master the fundamentals through hands-on practice and build a small project to showcase your knowledge.`,
       category: 'skills',
       priority: resumeData.skills.length < 5 ? 'high' : 'medium',
       estimatedDays: 7,
       completed: false,
-      impact: 8,
-      resources: [
-        { title: `${missingSkills[0]} Free Course`, url: '#' },
-        { title: `${missingSkills[0]} Documentation`, url: '#' },
-      ],
+      impact: 5,
+      resources: createLearningResources(missingSkills[0]),
     });
   }
 
@@ -267,15 +404,16 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: `Earn ${recommendedCert}`,
-      description: `This certification validates your skills and shows commitment to professional development.`,
+      description: `This certification validates your skills and demonstrates commitment to professional development. It boosts credibility with employers significantly.`,
       category: 'skills',
       priority: resumeData.certifications.length === 0 ? 'medium' : 'low',
       estimatedDays: 14,
       completed: false,
       impact: 6,
       resources: [
-        { title: `${recommendedCert} Exam Guide`, url: '#' },
-        { title: 'Practice Tests & Resources', url: '#' },
+        { title: 'Official Certification Guide', platform: 'official', url: '#', isFree: true },
+        { title: 'freeCodeCamp Prep Course', platform: 'freecodecamp', url: 'https://freecodecamp.org', isFree: true },
+        { title: 'Certification Prep (Coursera)', platform: 'coursera', url: 'https://coursera.org', isFree: false },
       ],
     });
   }
@@ -285,16 +423,16 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: 'Gain practical experience',
-      description: 'Look for internships, freelance projects, or volunteer opportunities. Even small projects count!',
+      description: 'Look for internships, contribute to open source, or take on freelance projects. Real-world experience is invaluable and highly valued by employers.',
       category: 'experience',
       priority: 'high',
       estimatedDays: 21,
       completed: false,
       impact: 12,
       resources: [
-        { title: 'Internship Matching Platforms', url: '#' },
-        { title: 'Freelance Job Sites', url: '#' },
-        { title: 'Open Source Projects to Contribute', url: '#' },
+        { title: 'Open Source Projects Guide', platform: 'official', url: 'https://github.com/topics', isFree: true },
+        { title: 'How to Contribute to Open Source', platform: 'freecodecamp', url: 'https://freecodecamp.org', isFree: true },
+        { title: 'Interview Preparation', platform: 'coursera', url: 'https://coursera.org', isFree: false },
       ],
     });
   }
@@ -304,14 +442,15 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: 'Enhance project descriptions',
-      description: 'Add technical details, challenges faced, and solutions implemented. Quantify results where possible.',
+      description: 'Add technical details, explain challenges faced, describe your solutions, and quantify results where possible. Make your projects shine!',
       category: 'projects',
       priority: 'medium',
       estimatedDays: 2,
       completed: false,
-      impact: 5,
+      impact: 4,
       resources: [
-        { title: 'How to Write Compelling Project Descriptions', url: '#' },
+        { title: 'Technical Writing Guide', platform: 'official', url: '#', isFree: true },
+        { title: 'How to Document Projects', platform: 'youtube', url: 'https://youtube.com', isFree: true },
       ],
     });
   }
@@ -321,50 +460,34 @@ function generateNextActions(resumeData: ResumeData, scoreResult: JobReadinessRe
     actions.push({
       id: `action-${actionId++}`,
       title: 'Create a personal portfolio website',
-      description: 'Build a stunning portfolio website to showcase your projects, skills, and personality.',
+      description: 'Build a stunning portfolio website to showcase your projects, skills, and professional story. Deploy it for free on Vercel or Netlify.',
       category: 'profile',
       priority: resumeData.projects.length > 0 ? 'high' : 'medium',
       estimatedDays: 4,
       completed: false,
       impact: 5,
       resources: [
-        { title: 'Portfolio Website Templates', url: '#' },
-        { title: 'Deploy for Free on Vercel/Netlify', url: '#' },
+        { title: 'Portfolio Templates', platform: 'official', url: 'https://vercel.com/templates', isFree: true },
+        { title: 'Build a Portfolio (freeCodeCamp)', platform: 'freecodecamp', url: 'https://freecodecamp.org', isFree: true },
+        { title: 'Web Development Course', platform: 'coursera', url: 'https://coursera.org', isFree: false },
       ],
     });
   }
 
-  // 9. Education (for beginners)
-  if (resumeData.education.length === 0 && level === 'beginner') {
-    actions.push({
-      id: `action-${actionId++}`,
-      title: 'Consider formal education or bootcamps',
-      description: 'A degree or coding bootcamp can provide structure and credibility. Research options that fit your goals.',
-      category: 'skills',
-      priority: 'low',
-      estimatedDays: 30,
-      completed: false,
-      impact: 10,
-      resources: [
-        { title: 'Top Coding Bootcamps', url: '#' },
-        { title: 'Online CS Degree Programs', url: '#' },
-      ],
-    });
-  }
-
-  // 10. Network & Community
+  // 9. Network & Community
   actions.push({
     id: `action-${actionId++}`,
     title: 'Join developer communities',
-    description: 'Connect with other developers, attend meetups, and participate in online communities.',
+    description: 'Connect with other developers, attend virtual or local meetups, participate in Discord communities, and engage on Twitter/X tech circles.',
     category: 'network',
     priority: 'low',
     estimatedDays: 3,
     completed: false,
     impact: 3,
     resources: [
-      { title: 'Tech Discord Servers', url: '#' },
-      { title: 'Local Meetup Groups', url: '#' },
+      { title: 'Tech Discord Servers List', platform: 'official', url: '#', isFree: true },
+      { title: 'Meetup.com Tech Groups', platform: 'official', url: 'https://meetup.com', isFree: true },
+      { title: 'Networking for Developers', platform: 'youtube', url: 'https://youtube.com', isFree: true },
     ],
   });
 
@@ -491,10 +614,14 @@ export function generateCareerRoadmap(resumeData: ResumeData): CareerRoadmap {
   // Calculate projected score
   const projectedScoreAfter = calculateProjectedScore(scoreResult.percentage, nextActions);
   const scoreImprovement = projectedScoreAfter - scoreResult.percentage;
+  const potentialScoreIncrease = nextActions.reduce((sum, a) => sum + a.impact, 0);
 
   // Generate motivation
   const motivationalMessage = generateMotivationalMessage(scoreResult.percentage);
   const encouragementPoints = getEncouragementPoints(projectedScoreAfter, scoreResult.percentage);
+
+  // Get random career tip
+  const careerTip = getCareerTip();
 
   return {
     currentLevel,
@@ -507,10 +634,13 @@ export function generateCareerRoadmap(resumeData: ResumeData): CareerRoadmap {
     currentScore: scoreResult.percentage,
     projectedScoreAfter,
     scoreImprovement,
+    potentialScoreIncrease,
     motivationalMessage,
     encouragementPoints,
     actionsCompleted: 0,
     totalActions: nextActions.length,
     progressPercentage: 0,
+    completedImpactPoints: 0,
+    careerTip,
   };
 }

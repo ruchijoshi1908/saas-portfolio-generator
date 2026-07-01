@@ -27,9 +27,16 @@ import {
   ExternalLink,
   Rocket,
   ArrowDown,
+  PartyPopper,
+  DollarSign,
+  Building2,
+  TrendingUp as TrendingUpIcon,
+  BookOpen,
+  Video,
+  Globe,
 } from 'lucide-react';
 import { ResumeData } from '../utils/resumeTypes';
-import { generateCareerRoadmap, CareerRoadmap, RoadmapAction } from '../utils/careerCoach';
+import { generateCareerRoadmap, CareerRoadmap, RoadmapAction, LearningResource } from '../utils/careerCoach';
 
 interface AICareerCoachProps {
   resumeData: ResumeData;
@@ -53,10 +60,10 @@ const categoryColors: Record<RoadmapAction['category'], string> = {
   network: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
 };
 
-const priorityColors: Record<RoadmapAction['priority'], string> = {
-  high: 'text-red-400 bg-red-500/10',
-  medium: 'text-yellow-400 bg-yellow-500/10',
-  low: 'text-neutral-400 bg-neutral-800',
+const priorityConfig: Record<RoadmapAction['priority'], { label: string; color: string; bgColor: string }> = {
+  high: { label: 'High Priority', color: 'text-red-400', bgColor: 'bg-red-500/10 border-red-500/30' },
+  medium: { label: 'Medium Priority', color: 'text-yellow-400', bgColor: 'bg-yellow-500/10 border-yellow-500/30' },
+  low: { label: 'Low Priority', color: 'text-neutral-400', bgColor: 'bg-neutral-800 border-neutral-700' },
 };
 
 const levelBadgeColors: Record<string, string> = {
@@ -65,15 +72,48 @@ const levelBadgeColors: Record<string, string> = {
   advanced: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
 };
 
+const industryDemandConfig: Record<string, { label: string; color: string }> = {
+  very_high: { label: 'Very High Demand', color: 'text-green-400 bg-green-500/10' },
+  high: { label: 'High Demand', color: 'text-emerald-400 bg-emerald-500/10' },
+  medium: { label: 'Medium Demand', color: 'text-yellow-400 bg-yellow-500/10' },
+  growing: { label: 'Growing Demand', color: 'text-blue-400 bg-blue-500/10' },
+};
+
+const platformIcons: Record<LearningResource['platform'], any> = {
+  official: BookOpen,
+  freecodecamp: Code2,
+  coursera: Globe,
+  youtube: Video,
+  other: ExternalLink,
+};
+
+const platformColors: Record<LearningResource['platform'], string> = {
+  official: 'text-blue-400 bg-blue-500/10',
+  freecodecamp: 'text-green-400 bg-green-500/10',
+  coursera: 'text-purple-400 bg-purple-500/10',
+  youtube: 'text-red-400 bg-red-500/10',
+  other: 'text-neutral-400 bg-neutral-800',
+};
+
 export default function AICareerCoach({ resumeData, onViewScore, onImproveProfile }: AICareerCoachProps) {
   const [roadmap, setRoadmap] = useState<CareerRoadmap | null>(null);
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     const generated = generateCareerRoadmap(resumeData);
     setRoadmap(generated);
   }, [resumeData]);
+
+  // Check if all tasks are completed
+  useEffect(() => {
+    if (roadmap && roadmap.actionsCompleted === roadmap.totalActions && roadmap.totalActions > 0) {
+      setIsCompleted(true);
+    } else {
+      setIsCompleted(false);
+    }
+  }, [roadmap?.actionsCompleted, roadmap?.totalActions]);
 
   if (!roadmap) return null;
 
@@ -83,17 +123,24 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
 
   const toggleActionComplete = (id: string) => {
     if (!roadmap) return;
+    const action = roadmap.nextActions.find(a => a.id === id);
+    if (!action) return;
+
     const updatedActions = roadmap.nextActions.map(a =>
       a.id === id ? { ...a, completed: !a.completed } : a
     );
     const completed = updatedActions.filter(a => a.completed).length;
     const progress = Math.round((completed / updatedActions.length) * 100);
+    const completedImpact = updatedActions
+      .filter(a => a.completed)
+      .reduce((sum, a) => sum + a.impact, 0);
 
     setRoadmap({
       ...roadmap,
       nextActions: updatedActions,
       actionsCompleted: completed,
       progressPercentage: progress,
+      completedImpactPoints: completedImpact,
     });
   };
 
@@ -126,6 +173,31 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
             A personalized plan to advance your career and boost your Job Readiness Score.
           </p>
         </div>
+
+        {/* Completion State */}
+        {isCompleted && (
+          <div className="card-premium p-8 mb-8 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center mx-auto mb-6">
+              <PartyPopper className="w-8 h-8 text-green-400" />
+            </div>
+            <h2 className="text-2xl font-display font-bold text-green-400 mb-3">Congratulations! You've completed your roadmap!</h2>
+            <p className="text-neutral-300 mb-4">All recommended actions have been completed. Here's your progress:</p>
+            <div className="inline-flex items-center gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary-400">{roadmap.currentScore + roadmap.completedImpactPoints}</div>
+                <div className="text-sm text-neutral-500">Final Score</div>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-400" />
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400">+{roadmap.completedImpactPoints}</div>
+                <div className="text-sm text-neutral-500">Points Gained</div>
+              </div>
+            </div>
+            <p className="text-neutral-400 text-lg">
+              You're now ready to start applying for internships and jobs. Your profile has been significantly strengthened!
+            </p>
+          </div>
+        )}
 
         {/* Current Level & Recommended Path */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -165,6 +237,76 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
               <span className="px-3 py-1 rounded-lg bg-neutral-800 text-neutral-400 text-xs">
                 {roadmap.recommendedPath.averageSalary}
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Career Path Details */}
+        <div className="card-premium p-6 mb-8">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-blue-400" />
+            </div>
+            <h3 className="font-display font-semibold text-neutral-100">Career Path Details: {roadmap.recommendedPath.name}</h3>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Salary Range */}
+            <div className="glass rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <DollarSign className="w-4 h-4 text-green-400" />
+                <span className="text-xs text-neutral-400 uppercase tracking-wider">Salary Range</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Entry</span>
+                  <span className="text-neutral-300">{roadmap.recommendedPath.salaryRange.entry}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Mid</span>
+                  <span className="text-neutral-300">{roadmap.recommendedPath.salaryRange.mid}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-neutral-500">Senior</span>
+                  <span className="text-neutral-300">{roadmap.recommendedPath.salaryRange.senior}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Skills */}
+            <div className="glass rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Code2 className="w-4 h-4 text-primary-400" />
+                <span className="text-xs text-neutral-400 uppercase tracking-wider">Key Skills</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {roadmap.recommendedPath.keySkills.slice(0, 4).map((skill, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 text-xs">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Industry Demand */}
+            <div className="glass rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Building2 className="w-4 h-4 text-amber-400" />
+                <span className="text-xs text-neutral-400 uppercase tracking-wider">Industry Demand</span>
+              </div>
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-sm font-medium ${industryDemandConfig[roadmap.recommendedPath.industryDemand].color}`}>
+                {industryDemandConfig[roadmap.recommendedPath.industryDemand].label}
+              </span>
+            </div>
+
+            {/* Growth Outlook */}
+            <div className="glass rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUpIcon className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs text-neutral-400 uppercase tracking-wider">Growth Outlook</span>
+              </div>
+              <p className="text-sm text-neutral-300">{roadmap.recommendedPath.growthRate}</p>
+              <p className="text-xs text-neutral-500 mt-1">{roadmap.recommendedPath.growthOutlook}</p>
             </div>
           </div>
         </div>
@@ -242,7 +384,7 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
             <div className="flex items-center gap-2">
               <ArrowRight className="w-6 h-6 text-green-400 hidden sm:block" />
               <ArrowDown className="w-6 h-6 text-green-400 sm:hidden" />
-              <span className="text-green-400 font-semibold text-sm">+{roadmap.scoreImprovement}</span>
+              <span className="text-green-400 font-semibold text-sm">+{roadmap.potentialScoreIncrease}</span>
             </div>
 
             {/* Projected Score */}
@@ -262,7 +404,7 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
               />
               <div
                 className="bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
-                style={{ width: `${roadmap.scoreImprovement}%` }}
+                style={{ width: `${Math.min(100 - roadmap.currentScore, roadmap.potentialScoreIncrease)}%` }}
               />
             </div>
           </div>
@@ -307,7 +449,12 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
                 <p className="text-neutral-500 text-sm">{roadmap.actionsCompleted} of {roadmap.totalActions} actions completed</p>
               </div>
             </div>
-            <span className="text-primary-400 font-semibold">{roadmap.progressPercentage}%</span>
+            <div className="text-right">
+              <span className="text-primary-400 font-semibold text-lg">{roadmap.progressPercentage}%</span>
+              {roadmap.completedImpactPoints > 0 && (
+                <p className="text-green-400 text-xs">+{roadmap.completedImpactPoints} pts</p>
+              )}
+            </div>
           </div>
           <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
             <div
@@ -337,6 +484,7 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
               {roadmap.nextActions.map((action, index) => {
                 const CategoryIcon = categoryIcons[action.category];
                 const isExpanded = expandedAction === action.id;
+                const priority = priorityConfig[action.priority];
 
                 return (
                   <div key={action.id} className="relative flex gap-5">
@@ -365,13 +513,13 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
                         onClick={() => toggleAction(action.id)}
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <span className={`px-2 py-1 rounded-lg border text-xs font-medium ${categoryColors[action.category]}`}>
                               <CategoryIcon className="w-3 h-3 inline mr-1" />
                               {action.category}
                             </span>
-                            <span className={`px-2 py-1 rounded-lg text-xs font-medium ${priorityColors[action.priority]}`}>
-                              {action.priority} priority
+                            <span className={`px-2 py-1 rounded-lg border text-xs font-medium ${priority.bgColor} ${priority.color}`}>
+                              {priority.label}
                             </span>
                           </div>
                           <div className="flex items-center gap-3 text-xs">
@@ -379,9 +527,9 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
                               <Clock className="w-3 h-3" />
                               ~{action.estimatedDays} days
                             </span>
-                            <span className="flex items-center gap-1 text-green-400">
+                            <span className="flex items-center gap-1 text-primary-400 font-semibold">
                               <TrendingUp className="w-3 h-3" />
-                              +{action.impact} pts
+                              +{action.impact}
                             </span>
                           </div>
                         </div>
@@ -395,17 +543,26 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
                       {/* Expanded Resources */}
                       {isExpanded && action.resources && action.resources.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-neutral-800">
-                          <p className="text-neutral-500 text-xs uppercase tracking-wider mb-3">Resources</p>
-                          <div className="space-y-2">
-                            {action.resources.map((resource, j) => (
-                              <button
-                                key={j}
-                                className="flex items-center gap-2 text-sm text-primary-400 hover:text-primary-300 transition-colors"
-                              >
-                                <ExternalLink className="w-3 h-3" />
-                                {resource.title}
-                              </button>
-                            ))}
+                          <p className="text-neutral-500 text-xs uppercase tracking-wider mb-3">Learning Resources</p>
+                          <div className="grid sm:grid-cols-2 gap-2">
+                            {action.resources.map((resource, j) => {
+                              const PlatformIcon = platformIcons[resource.platform];
+                              return (
+                                <a
+                                  key={j}
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${platformColors[resource.platform]} hover:opacity-80`}
+                                >
+                                  <PlatformIcon className="w-4 h-4" />
+                                  <span className="truncate">{resource.title}</span>
+                                  {resource.isFree && (
+                                    <span className="text-xs px-1 py-0.5 rounded bg-green-500/20 text-green-400">Free</span>
+                                  )}
+                                </a>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
@@ -456,6 +613,25 @@ export default function AICareerCoach({ resumeData, onViewScore, onImproveProfil
                 </span>
               );
             })}
+          </div>
+        </div>
+
+        {/* Career Tip */}
+        <div className="card-premium p-6 mb-8 bg-gradient-to-r from-amber-500/5 to-orange-500/5 border-amber-500/10">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+              <Lightbulb className="w-6 h-6 text-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-amber-400 uppercase tracking-wider font-medium">Career Tip</span>
+                <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 text-xs capitalize">
+                  {roadmap.careerTip.category}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold text-neutral-200 mb-2">{roadmap.careerTip.title}</h3>
+              <p className="text-neutral-400 text-sm leading-relaxed">{roadmap.careerTip.content}</p>
+            </div>
           </div>
         </div>
 
