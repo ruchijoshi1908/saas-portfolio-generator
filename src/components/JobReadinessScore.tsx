@@ -12,6 +12,7 @@ import {
   Sparkles,
   ChevronRight,
   Compass,
+  Linkedin,
 } from 'lucide-react';
 import { ResumeData } from '../utils/resumeTypes';
 import {
@@ -26,6 +27,7 @@ interface JobReadinessScoreProps {
   onViewPortfolio?: () => void;
   onImproveProfile?: () => void;
   onViewCareerCoach?: () => void;
+  onViewLinkedIn?: () => void;
 }
 
 export default function JobReadinessScore({
@@ -33,6 +35,7 @@ export default function JobReadinessScore({
   portfolioGenerated = false,
   onViewPortfolio,
   onViewCareerCoach,
+  onViewLinkedIn,
 }: JobReadinessScoreProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
@@ -172,8 +175,14 @@ export default function JobReadinessScore({
               )}
 
               <div className="flex flex-col sm:flex-row gap-4">
+                {onViewLinkedIn && (
+                  <button onClick={onViewLinkedIn} className="btn-primary flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500">
+                    <Linkedin className="w-4 h-4" />
+                    Generate LinkedIn Profile
+                  </button>
+                )}
                 {onViewCareerCoach && (
-                  <button onClick={onViewCareerCoach} className="btn-primary flex items-center justify-center gap-2">
+                  <button onClick={onViewCareerCoach} className="btn-secondary flex items-center justify-center gap-2">
                     <Compass className="w-4 h-4" />
                     Get Career Roadmap
                   </button>

@@ -45,6 +45,7 @@ import ResumeUpload from './components/ResumeUpload';
 import ResumeReview from './components/ResumeReview';
 import JobReadinessScore from './components/JobReadinessScore';
 import AICareerCoach from './components/AICareerCoach';
+import LinkedInGenerator from './components/LinkedInGenerator';
 import { ResumeData, emptyResumeData } from './utils/resumeTypes';
 
 interface Project {
@@ -1437,7 +1438,7 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore }: PortfolioProps) => (
 // ============================================================================
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach' | 'linkedin'>('landing');
   const [portfolioData, setPortfolioData] = useState<PortfolioData>({
     profileImage: null,
     name: '',
@@ -1505,6 +1506,7 @@ function App() {
           onViewPortfolio={() => setCurrentView('portfolio')}
           onImproveProfile={() => setCurrentView('review')}
           onViewCareerCoach={() => setCurrentView('career-coach')}
+          onViewLinkedIn={() => setCurrentView('linkedin')}
         />
       )}
       {currentView === 'career-coach' && (
@@ -1512,6 +1514,13 @@ function App() {
           resumeData={resumeData}
           onViewScore={() => setCurrentView('score')}
           onImproveProfile={() => setCurrentView('review')}
+        />
+      )}
+      {currentView === 'linkedin' && (
+        <LinkedInGenerator
+          resumeData={resumeData}
+          onBack={() => setCurrentView('score')}
+          onContinue={() => setCurrentView('score')}
         />
       )}
     </div>
