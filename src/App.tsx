@@ -46,6 +46,7 @@ import ResumeReview from './components/ResumeReview';
 import JobReadinessScore from './components/JobReadinessScore';
 import AICareerCoach from './components/AICareerCoach';
 import LinkedInGenerator from './components/LinkedInGenerator';
+import ResumeImprovement from './components/ResumeImprovement';
 import { ResumeData, emptyResumeData } from './utils/resumeTypes';
 
 interface Project {
@@ -228,9 +229,9 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
           {/* Badge */}
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full glass border border-primary-500/20 animate-fade-in mb-8">
             <Sparkles className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-primary-300">4 AI Tools Available Now</span>
+            <span className="text-sm font-medium text-primary-300">5 AI Tools Available Now</span>
             <span className="w-1 h-1 rounded-full bg-neutral-600" />
-            <span className="text-sm text-neutral-400">Portfolio, LinkedIn, Score, Roadmap</span>
+            <span className="text-sm text-neutral-400">Portfolio, LinkedIn, Resume, Score, Roadmap</span>
           </div>
 
           {/* Main headline */}
@@ -349,9 +350,9 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
               },
               {
                 icon: FileText,
-                title: "Resume Improvement",
-                desc: "Get AI-powered suggestions to enhance your resume and increase visibility.",
-                available: false,
+                title: "AI Resume Improvement",
+                desc: "Get AI-powered suggestions, section analysis, and improvement recommendations.",
+                available: true,
               },
               {
                 icon: Target,
@@ -546,7 +547,7 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
             {[
               { icon: Linkedin, title: "LinkedIn Profile Generator", desc: "AI-optimized profile content", available: true },
               { icon: Compass, title: "Career Roadmap Generator", desc: "Personalized career guidance", available: true },
-              { icon: FileSearch, title: "Resume Analyzer", desc: "Smart improvement suggestions", available: false },
+              { icon: FileSearch, title: "Resume Improvement", desc: "Smart analysis and suggestions", available: true },
               { icon: Target, title: "ATS Resume Score", desc: "Beat applicant tracking systems", available: false },
               { icon: BarChart3, title: "Skills Analytics", desc: "Understand skill gaps and growth areas", available: false },
               { icon: MessageSquare, title: "Interview Prep Assistant", desc: "Practice with AI feedback", available: false },
@@ -691,10 +692,10 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
             <div>
               <h4 className="font-semibold text-neutral-100 mb-4">Coming Soon</h4>
               <ul className="space-y-2 text-sm">
-                <li><span className="text-neutral-600">Resume Analyzer</span></li>
                 <li><span className="text-neutral-600">Skills Analytics</span></li>
                 <li><span className="text-neutral-600">Interview Prep</span></li>
                 <li><span className="text-neutral-600">ATS Score</span></li>
+                <li><span className="text-neutral-600">Cover Letter Generator</span></li>
               </ul>
             </div>
             <div>
@@ -1453,7 +1454,7 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore }: PortfolioProps) => (
 // ============================================================================
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach' | 'linkedin'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach' | 'linkedin' | 'resume-improvement'>('landing');
   const [portfolioData, setPortfolioData] = useState<PortfolioData>({
     profileImage: null,
     name: '',
@@ -1522,6 +1523,7 @@ function App() {
           onImproveProfile={() => setCurrentView('review')}
           onViewCareerCoach={() => setCurrentView('career-coach')}
           onViewLinkedIn={() => setCurrentView('linkedin')}
+          onViewResumeImprovement={() => setCurrentView('resume-improvement')}
         />
       )}
       {currentView === 'career-coach' && (
@@ -1536,6 +1538,15 @@ function App() {
           resumeData={resumeData}
           onBack={() => setCurrentView('score')}
           onContinue={() => setCurrentView('score')}
+        />
+      )}
+      {currentView === 'resume-improvement' && (
+        <ResumeImprovement
+          resumeData={resumeData}
+          onBack={() => setCurrentView('score')}
+          onContinue={() => setCurrentView('score')}
+          onNavigateToLinkedIn={() => setCurrentView('linkedin')}
+          onNavigateToRoadmap={() => setCurrentView('career-coach')}
         />
       )}
     </div>
