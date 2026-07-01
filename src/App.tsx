@@ -112,19 +112,19 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
   const faqs = [
     {
       q: "How does CareerLaunch AI work?",
-      a: "Simply provide your information through our intuitive form, and our AI will instantly generate a professional, polished portfolio website. No coding or design skills required.",
+      a: "Simply upload your resume or enter your information through our intuitive form, and our AI will instantly generate a professional portfolio, LinkedIn profile content, and career insights. No coding or design skills required.",
     },
     {
       q: "Is CareerLaunch AI free to use?",
-      a: "Yes! Our portfolio generator is completely free. We believe everyone deserves access to professional career tools, regardless of their budget.",
+      a: "Yes! Our core features including portfolio generator, LinkedIn profile generator, job readiness score, and career roadmap are completely free. We believe everyone deserves access to professional career tools.",
     },
     {
-      q: "Can I generate a portfolio from my resume?",
-      a: "Currently, you can manually enter your information for the best results. Automatic resume parsing is coming soon as part of our roadmap.",
+      q: "What can I generate with CareerLaunch AI?",
+      a: "You can generate a professional portfolio website, optimized LinkedIn profile content (headlines, about sections, skills), get a job readiness score, and receive a personalized career roadmap with learning resources.",
     },
     {
-      q: "Will LinkedIn generation be available soon?",
-      a: "Yes! LinkedIn profile optimization, including AI-generated headlines, about sections, and skills recommendations, is on our roadmap and coming very soon.",
+      q: "How accurate is the job readiness score?",
+      a: "Our AI analyzes multiple factors including skills, projects, experience, and online presence to calculate your readiness score. It's designed to give you actionable insights on improving your profile.",
     },
     {
       q: "Who is CareerLaunch AI for?",
@@ -228,7 +228,9 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
           {/* Badge */}
           <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full glass border border-primary-500/20 animate-fade-in mb-8">
             <Sparkles className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-primary-300">AI-Powered Career Platform</span>
+            <span className="text-sm font-medium text-primary-300">4 AI Tools Available Now</span>
+            <span className="w-1 h-1 rounded-full bg-neutral-600" />
+            <span className="text-sm text-neutral-400">Portfolio, LinkedIn, Score, Roadmap</span>
           </div>
 
           {/* Main headline */}
@@ -239,7 +241,7 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-neutral-400 max-w-3xl mx-auto leading-relaxed mb-10 animate-fade-in" style={{ animationDelay: '0.2s' }}>
-            Generate a professional portfolio website, LinkedIn profile content, resume improvements, and career insights using AI. Built for students, graduates, and job seekers.
+            Generate a professional portfolio website, LinkedIn profile content, get your job readiness score, and receive a personalized career roadmap. Built for students, graduates, and job seekers.
           </p>
 
           {/* CTA Buttons */}
@@ -341,9 +343,9 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
               },
               {
                 icon: Linkedin,
-                title: "LinkedIn Profile Generator",
+                title: "AI LinkedIn Profile Generator",
                 desc: "Generate compelling headlines, about sections, and optimized profile content.",
-                available: false,
+                available: true,
               },
               {
                 icon: FileText,
@@ -359,9 +361,9 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
               },
               {
                 icon: Map,
-                title: "Career Roadmap",
-                desc: "Receive personalized next steps and actionable career guidance.",
-                available: false,
+                title: "AI Career Roadmap",
+                desc: "Receive personalized next steps, learning resources, and actionable career guidance.",
+                available: true,
               },
               {
                 icon: BarChart3,
@@ -414,8 +416,8 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
             <StepCard num={1} icon={Upload} title="Enter Your Info" desc="Add your skills, projects, and experience details" />
             <StepCard num={2} icon={Sparkles} title="AI Analysis" desc="Our AI analyzes your skills and experience" />
             <StepCard num={3} icon={Globe} title="Generate Portfolio" desc="Instant professional portfolio website" />
-            <StepCard num={4} icon={Linkedin} title="LinkedIn Content" desc="Optimized profile content (coming soon)" />
-            <StepCard num={5} icon={TrendingUp} title="Career Insights" desc="Job readiness score and recommendations" />
+            <StepCard num={4} icon={Linkedin} title="LinkedIn Content" desc="Optimized profile content ready to use" />
+            <StepCard num={5} icon={TrendingUp} title="Career Insights" desc="Job readiness score and roadmap" />
           </div>
         </div>
       </section>
@@ -475,8 +477,8 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
                   <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center mb-4">
                     <TrendingUp className="w-10 h-10 text-neutral-950" />
                   </div>
-                  <h3 className="text-2xl font-display font-bold text-neutral-100 mb-2">Track Your Progress</h3>
-                  <p className="text-neutral-400">Job readiness dashboard coming soon</p>
+                  <h3 className="text-2xl font-display font-bold text-neutral-100 mb-2">All-In-One Platform</h3>
+                  <p className="text-neutral-400">Your complete career toolkit</p>
                 </div>
 
                 <div className="space-y-4">
@@ -490,13 +492,23 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
                     </div>
                   </div>
 
-                  <div className="glass rounded-xl p-4 opacity-60">
+                  <div className="glass rounded-xl p-4">
                     <div className="flex justify-between mb-2">
                       <span className="text-sm text-neutral-400">LinkedIn Optimized</span>
-                      <span className="text-sm text-neutral-500 font-medium">Coming Soon</span>
+                      <span className="text-sm text-primary-400 font-medium">Available</span>
                     </div>
                     <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
-                      <div className="h-full w-1/2 bg-neutral-700 rounded-full" />
+                      <div className="h-full w-full bg-gradient-to-r from-primary-400 to-accent-400 rounded-full" />
+                    </div>
+                  </div>
+
+                  <div className="glass rounded-xl p-4">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm text-neutral-400">Career Roadmap</span>
+                      <span className="text-sm text-primary-400 font-medium">Available</span>
+                    </div>
+                    <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+                      <div className="h-full w-full bg-gradient-to-r from-primary-400 to-accent-400 rounded-full" />
                     </div>
                   </div>
 
@@ -526,27 +538,30 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
             </div>
             <h2 className="section-title text-neutral-100 mb-4">What's Coming Next</h2>
             <p className="text-neutral-400 text-lg">
-              We're building the complete career toolkit. Here's what's on our roadmap.
+              We're building the complete career toolkit. Here's what's next on our roadmap.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { icon: Linkedin, title: "LinkedIn Profile Generator", desc: "AI-optimized profile content" },
-              { icon: FileSearch, title: "Resume Analyzer", desc: "Smart improvement suggestions" },
-              { icon: Target, title: "ATS Resume Score", desc: "Beat applicant tracking systems" },
-              { icon: BarChart3, title: "Job Readiness Dashboard", desc: "Track your career progress" },
-              { icon: Compass, title: "Career Roadmap Generator", desc: "Personalized career guidance" },
-              { icon: MessageSquare, title: "Interview Prep Assistant", desc: "Practice with AI feedback" },
+              { icon: Linkedin, title: "LinkedIn Profile Generator", desc: "AI-optimized profile content", available: true },
+              { icon: Compass, title: "Career Roadmap Generator", desc: "Personalized career guidance", available: true },
+              { icon: FileSearch, title: "Resume Analyzer", desc: "Smart improvement suggestions", available: false },
+              { icon: Target, title: "ATS Resume Score", desc: "Beat applicant tracking systems", available: false },
+              { icon: BarChart3, title: "Skills Analytics", desc: "Understand skill gaps and growth areas", available: false },
+              { icon: MessageSquare, title: "Interview Prep Assistant", desc: "Practice with AI feedback", available: false },
             ].map((item, i) => (
-              <div key={i} className="card-premium p-5 flex items-center gap-4 group">
-                <div className="w-12 h-12 rounded-xl bg-accent-500/10 border border-accent-500/20 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
-                  <item.icon className="w-6 h-6 text-accent-400" />
+              <div key={i} className={`card-premium p-5 flex items-center gap-4 group ${!item.available ? 'opacity-60' : ''}`}>
+                <div className={`w-12 h-12 rounded-xl ${item.available ? 'bg-green-500/10 border border-green-500/20' : 'bg-accent-500/10 border border-accent-500/20'} flex items-center justify-center group-hover:scale-110 transition-transform shrink-0`}>
+                  <item.icon className={`w-6 h-6 ${item.available ? 'text-green-400' : 'text-accent-400'}`} />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-display font-semibold text-neutral-100">{item.title}</h3>
                   <p className="text-neutral-500 text-sm">{item.desc}</p>
                 </div>
+                {item.available && (
+                  <span className="px-2 py-1 rounded-lg bg-green-500/10 text-green-400 text-xs font-medium">Available</span>
+                )}
               </div>
             ))}
           </div>
@@ -676,10 +691,10 @@ const LandingPage = ({ onGetStarted, onViewExample }: LandingPageProps) => {
             <div>
               <h4 className="font-semibold text-neutral-100 mb-4">Coming Soon</h4>
               <ul className="space-y-2 text-sm">
-                <li><span className="text-neutral-600">LinkedIn Generator</span></li>
                 <li><span className="text-neutral-600">Resume Analyzer</span></li>
-                <li><span className="text-neutral-300">Job Readiness Score</span></li>
-                <li><span className="text-neutral-600">Career Roadmap</span></li>
+                <li><span className="text-neutral-600">Skills Analytics</span></li>
+                <li><span className="text-neutral-600">Interview Prep</span></li>
+                <li><span className="text-neutral-600">ATS Score</span></li>
               </ul>
             </div>
             <div>
