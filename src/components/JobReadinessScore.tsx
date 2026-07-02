@@ -99,7 +99,7 @@ export default function JobReadinessScore({
   const strokeDashoffset = circumference - (animatedScore / 100) * circumference;
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-neutral-950">
+    <div className="min-h-screen py-8 px-4 pt-20 bg-neutral-950">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-[150px]" />

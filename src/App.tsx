@@ -13,11 +13,36 @@ import {
   Plus,
   Trash2,
   ArrowRight,
+  ArrowLeft,
   Rocket,
   Zap,
   Shield,
   CheckCircle2,
   Download,
+  Globe,
+  Trophy,
+  ArrowUpRight,
+  Star,
+  FileText,
+  Target,
+  TrendingUp,
+  Map,
+  Users,
+  GraduationCap,
+  Briefcase,
+  Palette,
+  RefreshCw,
+  Clock,
+  Award,
+  Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  Play,
+  BarChart3,
+  Compass,
+  FileSearch,
+  MessageSquare,
+} from 'lucide-react';
   ArrowUpRight,
   Star,
   FileText,
@@ -48,6 +73,7 @@ import AICareerCoach from './components/AICareerCoach';
 import LinkedInGenerator from './components/LinkedInGenerator';
 import ResumeImprovement from './components/ResumeImprovement';
 import SkillsAnalytics from './components/SkillsAnalytics';
+import ResultsDashboard from './components/ResultsDashboard';
 import { ResumeData, emptyResumeData } from './utils/resumeTypes';
 
 interface Project {
@@ -1455,7 +1481,7 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore }: PortfolioProps) => (
 // ============================================================================
 
 function App() {
-  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach' | 'linkedin' | 'resume-improvement' | 'skills-analytics'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'review' | 'form' | 'portfolio' | 'score' | 'career-coach' | 'linkedin' | 'resume-improvement' | 'skills-analytics' | 'results-dashboard'>('landing');
   const [portfolioData, setPortfolioData] = useState<PortfolioData>({
     profileImage: null,
     name: '',
@@ -1468,14 +1494,61 @@ function App() {
     email: '',
   });
   const [resumeData, setResumeData] = useState<ResumeData>(emptyResumeData);
+  const [portfolioGenerated, setPortfolioGenerated] = useState(false);
+
+  // Navigation bar component for views other than landing
+  const NavigationBar = () => (
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <button
+            onClick={() => setCurrentView('landing')}
+            className="flex items-center gap-2 text-neutral-100 font-semibold hover:opacity-80 transition-opacity"
+          >
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-neutral-950" />
+            </div>
+            <span className="font-display">CareerLaunch AI</span>
+          </button>
+
+          <div className="flex items-center gap-4">
+            {portfolioGenerated && (
+              <button
+                onClick={() => setCurrentView('portfolio')}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 font-medium transition-all hover:scale-105"
+              >
+                <Globe className="w-4 h-4" />
+                <span className="hidden sm:inline">Portfolio</span>
+              </button>
+            )}
+            {currentView !== 'landing' && currentView !== 'portfolio' && portfolioGenerated && (
+              <button
+                onClick={() => setCurrentView('results-dashboard')}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg glass text-neutral-300 hover:text-neutral-100 transition-colors"
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm">Dashboard</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+
+  // Determine if we should show the navigation bar
+  const showNavBar = currentView !== 'landing' && currentView !== 'upload';
 
   return (
     <div className="min-h-screen">
+      {showNavBar && <NavigationBar />}
+
       {currentView === 'landing' && (
         <LandingPage
           onGetStarted={() => setCurrentView('upload')}
           onViewExample={(data) => {
             setPortfolioData(data);
+            setPortfolioGenerated(true);
             setCurrentView('portfolio');
           }}
         />
@@ -1496,7 +1569,8 @@ function App() {
           onResumeDataChange={setResumeData}
           onGeneratePortfolio={(data) => {
             setPortfolioData(data);
-            setCurrentView('score');
+            setPortfolioGenerated(true);
+            setCurrentView('results-dashboard');
           }}
           onBack={() => setCurrentView('upload')}
         />
@@ -1506,7 +1580,10 @@ function App() {
           portfolioData={portfolioData}
           setPortfolioData={setPortfolioData}
           onBack={() => setCurrentView('landing')}
-          onSubmit={() => setCurrentView('portfolio')}
+          onSubmit={() => {
+            setPortfolioGenerated(true);
+            setCurrentView('portfolio');
+          }}
         />
       )}
       {currentView === 'portfolio' && (
@@ -1516,10 +1593,22 @@ function App() {
           onViewScore={() => setCurrentView('score')}
         />
       )}
+      {currentView === 'results-dashboard' && (
+        <ResultsDashboard
+          onViewPortfolio={() => setCurrentView('portfolio')}
+          onEditPortfolio={() => setCurrentView('form')}
+          onViewScore={() => setCurrentView('score')}
+          onViewLinkedIn={() => setCurrentView('linkedin')}
+          onViewResumeImprovement={() => setCurrentView('resume-improvement')}
+          onViewCareerRoadmap={() => setCurrentView('career-coach')}
+          onViewSkillsAnalytics={() => setCurrentView('skills-analytics')}
+          portfolioGenerated={portfolioGenerated}
+        />
+      )}
       {currentView === 'score' && (
         <JobReadinessScore
           resumeData={resumeData}
-          portfolioGenerated={true}
+          portfolioGenerated={portfolioGenerated}
           onViewPortfolio={() => setCurrentView('portfolio')}
           onImproveProfile={() => setCurrentView('review')}
           onViewCareerCoach={() => setCurrentView('career-coach')}
