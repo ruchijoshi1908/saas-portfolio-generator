@@ -193,6 +193,12 @@ export default function JobReadinessScore({
                     Skills Analytics
                   </button>
                 )}
+                {onViewPortfolio && (
+                  <button onClick={onViewPortfolio} className="btn-secondary flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white border-0">
+                    <Trophy className="w-4 h-4" />
+                    View Portfolio
+                  </button>
+                )}
                 {onViewLinkedIn && (
                   <button onClick={onViewLinkedIn} className="btn-secondary flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white">
                     <Linkedin className="w-4 h-4" />
@@ -203,12 +209,6 @@ export default function JobReadinessScore({
                   <button onClick={onViewCareerCoach} className="btn-secondary flex items-center justify-center gap-2">
                     <Compass className="w-4 h-4" />
                     Career Roadmap
-                  </button>
-                )}
-                {onViewPortfolio && (
-                  <button onClick={onViewPortfolio} className="btn-secondary flex items-center justify-center gap-2">
-                    View Portfolio
-                    <ChevronRight className="w-4 h-4" />
                   </button>
                 )}
               </div>
