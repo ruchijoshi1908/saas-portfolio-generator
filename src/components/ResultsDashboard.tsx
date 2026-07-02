@@ -3,7 +3,6 @@
 
 import {
   Globe,
-  Trophy,
   Pencil,
   Download,
   Target,
