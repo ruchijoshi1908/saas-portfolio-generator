@@ -14,6 +14,7 @@ import {
   Compass,
   Linkedin,
   FileSearch,
+  Brain,
 } from 'lucide-react';
 import { ResumeData } from '../utils/resumeTypes';
 import {
@@ -30,6 +31,7 @@ interface JobReadinessScoreProps {
   onViewCareerCoach?: () => void;
   onViewLinkedIn?: () => void;
   onViewResumeImprovement?: () => void;
+  onViewSkillsAnalytics?: () => void;
 }
 
 export default function JobReadinessScore({
@@ -39,6 +41,7 @@ export default function JobReadinessScore({
   onViewCareerCoach,
   onViewLinkedIn,
   onViewResumeImprovement,
+  onViewSkillsAnalytics,
 }: JobReadinessScoreProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
@@ -182,6 +185,12 @@ export default function JobReadinessScore({
                   <button onClick={onViewResumeImprovement} className="btn-primary flex items-center justify-center gap-2">
                     <FileSearch className="w-4 h-4" />
                     Improve My Resume
+                  </button>
+                )}
+                {onViewSkillsAnalytics && (
+                  <button onClick={onViewSkillsAnalytics} className="btn-secondary flex items-center justify-center gap-2 bg-accent-600 hover:bg-accent-500 text-white">
+                    <Brain className="w-4 h-4" />
+                    Skills Analytics
                   </button>
                 )}
                 {onViewLinkedIn && (
