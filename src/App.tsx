@@ -13,6 +13,7 @@ import {
   Plus,
   Trash2,
   ArrowRight,
+  ArrowLeft,
   Rocket,
   Zap,
   Shield,
@@ -1176,9 +1177,10 @@ interface PortfolioProps {
   portfolioData: PortfolioData;
   onEdit: () => void;
   onViewScore?: () => void;
+  onBackToDashboard?: () => void;
 }
 
-const Portfolio = ({ portfolioData, onEdit, onViewScore }: PortfolioProps) => (
+const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: PortfolioProps) => (
   <div className="min-h-screen relative bg-neutral-950">
     {/* Subtle grid */}
     <div
@@ -1197,9 +1199,15 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore }: PortfolioProps) => (
 
     <div className="relative z-10">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-40 glass border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {onBackToDashboard && (
+              <button onClick={onBackToDashboard} className="flex items-center gap-2 text-neutral-400 hover:text-neutral-200 transition-colors mr-2">
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm hidden sm:inline">Dashboard</span>
+              </button>
+            )}
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
               <Rocket className="w-5 h-5 text-neutral-950" />
             </div>
@@ -1513,7 +1521,7 @@ function App() {
   );
 
   // Determine if we should show the navigation bar
-  const showNavBar = currentView !== 'landing' && currentView !== 'upload';
+  const showNavBar = currentView !== 'landing' && currentView !== 'upload' && currentView !== 'portfolio';
 
   return (
     <div className="min-h-screen">
@@ -1567,6 +1575,7 @@ function App() {
           portfolioData={portfolioData}
           onEdit={() => setCurrentView('form')}
           onViewScore={() => setCurrentView('score')}
+          onBackToDashboard={() => setCurrentView('results-dashboard')}
         />
       )}
       {currentView === 'results-dashboard' && (
