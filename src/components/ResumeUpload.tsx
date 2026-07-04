@@ -237,13 +237,17 @@ export default function ResumeUpload({ onResumeParsed, onManualEntry, onBack }: 
                     <Sparkles className="w-10 h-10 text-accent-400" />
                   </div>
                   <h3 className="text-xl font-display font-semibold text-neutral-100 mb-3">
-                    AI is analyzing your resume...
+                    Reading your resume...
                   </h3>
-                  <p className="text-neutral-500 text-sm mb-6">
-                    Extracting your skills, experience, and education
+                  <p className="text-neutral-500 text-sm mb-2">
+                    Extracting contact information, skills, and experience
                   </p>
-                  <div className="max-w-xs mx-auto">
+                  <div className="max-w-xs mx-auto mb-4">
                     <Loader2 className="w-8 h-8 text-accent-400 animate-spin mx-auto" />
+                  </div>
+                  <div className="text-xs text-neutral-600 space-y-1">
+                    <p>Parsing document structure...</p>
+                    <p>Identifying sections and content...</p>
                   </div>
                 </>
               )}

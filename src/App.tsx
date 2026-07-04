@@ -43,6 +43,8 @@ import {
   FileSearch,
   MessageSquare,
   Phone,
+  Image,
+  Printer,
 } from 'lucide-react';
 import ResumeUpload from './components/ResumeUpload';
 import ResumeReview from './components/ResumeReview';
@@ -1251,6 +1253,154 @@ const inferTitleFromPortfolio = (data: PortfolioData): string => {
   return 'Professional';
 };
 
+// Export dropdown component
+const ExportDropdown = ({ portfolioData }: { portfolioData: PortfolioData }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const downloadPDF = async () => {
+    setExporting('pdf');
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).default;
+
+      const element = document.getElementById('portfolio-content');
+      if (!element) return;
+
+      // Add export class for better PDF rendering
+      element.classList.add('exporting');
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0a0a0a',
+        logging: false,
+      });
+
+      element.classList.remove('exporting');
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      const fileName = portfolioData.name?.replace(/\s+/g, '_') || 'Portfolio';
+      pdf.save(`${fileName}_Portfolio.pdf`);
+
+      setSuccess('PDF downloaded successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      // Fallback to print
+      window.print();
+    }
+    setExporting(null);
+    setIsOpen(false);
+  };
+
+  const downloadPNG = async () => {
+    setExporting('png');
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+
+      const element = document.getElementById('portfolio-content');
+      if (!element) return;
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0a0a0a',
+        logging: false,
+      });
+
+      const link = document.createElement('a');
+      const fileName = portfolioData.name?.replace(/\s+/g, '_') || 'Portfolio';
+      link.download = `${fileName}_Portfolio.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      setSuccess('PNG downloaded successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error('PNG export failed:', error);
+    }
+    setExporting(null);
+    setIsOpen(false);
+  };
+
+  const handlePrint = () => {
+    window.print();
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Success notification */}
+      {success && (
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-sm whitespace-nowrap animate-scale-in z-50">
+          <CheckCircle2 className="w-4 h-4 inline mr-2" />
+          {success}
+        </div>
+      )}
+
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-neutral-950 font-medium text-sm hover:opacity-90 transition-opacity"
+      >
+        <Download className="w-4 h-4" />
+        <span className="hidden sm:inline">Export</span>
+        <ChevronDown className="w-3 h-3 hidden sm:inline" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-48 glass rounded-xl border border-neutral-700 overflow-hidden shadow-xl z-50 animate-scale-in">
+          <button
+            onClick={downloadPDF}
+            disabled={exporting !== null}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-200 hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            <FileText className="w-4 h-4 text-primary-400" />
+            <span>{exporting === 'pdf' ? 'Generating...' : 'Download PDF'}</span>
+          </button>
+          <button
+            onClick={downloadPNG}
+            disabled={exporting !== null}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-200 hover:bg-white/5 transition-colors disabled:opacity-50"
+          >
+            <Image className="w-4 h-4 text-accent-400" />
+            <span>{exporting === 'png' ? 'Generating...' : 'Download PNG'}</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left text-neutral-200 hover:bg-white/5 transition-colors border-t border-neutral-700"
+          >
+            <Printer className="w-4 h-4 text-neutral-400" />
+            <span>Print Portfolio</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Icon component for contact info
 const ContactIcon = ({ type }: { type: string }) => {
   const icons: Record<string, React.ReactNode> = {
@@ -1321,14 +1471,13 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: Po
             <button onClick={onEdit} className="px-3 py-2 rounded-lg glass text-neutral-300 hover:text-neutral-100 text-sm transition-colors">
               Edit
             </button>
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-neutral-950 font-medium text-sm hover:opacity-90 transition-opacity">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
+            <ExportDropdown portfolioData={portfolioData} />
           </div>
         </div>
       </nav>
 
+      {/* Portfolio Content */}
+      <div id="portfolio-content">
       {/* Hero Section */}
       <section className="pt-28 sm:pt-40 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto text-center">
@@ -1727,6 +1876,7 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: Po
           <p className="text-neutral-600 text-xs">Designed to help students and professionals build beautiful portfolios.</p>
         </div>
       </footer>
+      </div>{/* End portfolio-content */}
     </div>
   </div>
   );
@@ -1758,6 +1908,17 @@ function App() {
   const [resumeData, setResumeData] = useState<ResumeData>(emptyResumeData);
   const [portfolioGenerated, setPortfolioGenerated] = useState(false);
 
+  // Feature navigation items
+  const featureNavItems = [
+    { id: 'results-dashboard', label: 'Dashboard', icon: Trophy },
+    { id: 'portfolio', label: 'Portfolio', icon: Globe },
+    { id: 'score', label: 'Job Score', icon: Target },
+    { id: 'career-coach', label: 'Roadmap', icon: Compass },
+    { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
+    { id: 'resume-improvement', label: 'Resume', icon: FileText },
+    { id: 'skills-analytics', label: 'Skills', icon: BarChart3 },
+  ];
+
   // Navigation bar component for views other than landing
   const NavigationBar = () => (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-800">
@@ -1770,56 +1931,103 @@ function App() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-neutral-950" />
             </div>
-            <span className="font-display">CareerLaunch AI</span>
+            <span className="font-display hidden sm:inline">CareerLaunch AI</span>
           </button>
 
-          <div className="flex items-center gap-4">
-            {portfolioGenerated && (
+          {/* Feature Navigation Chips */}
+          {portfolioGenerated && (
+            <div className="hidden md:flex items-center gap-1 glass rounded-full px-2 py-1">
+              {featureNavItems.map((item) => {
+                const isActive = currentView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentView(item.id as any)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      isActive
+                        ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                        : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 sm:gap-4">
+            {!portfolioGenerated && currentView !== 'landing' && (
               <button
-                onClick={() => setCurrentView('portfolio')}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 hover:border-emerald-500/40 text-emerald-400 font-medium transition-all hover:scale-105"
+                onClick={() => setCurrentView('landing')}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg glass text-neutral-300 hover:text-neutral-100 transition-colors"
               >
-                <Globe className="w-4 h-4" />
-                <span className="hidden sm:inline">Portfolio</span>
-              </button>
-            )}
-            {currentView !== 'landing' && currentView !== 'portfolio' && portfolioGenerated && (
-              <button
-                onClick={() => setCurrentView('results-dashboard')}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg glass text-neutral-300 hover:text-neutral-100 transition-colors"
-              >
-                <Trophy className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Dashboard</span>
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline text-sm">Home</span>
               </button>
             )}
           </div>
         </div>
       </div>
+
+      {/* Mobile Feature Navigation */}
+      {portfolioGenerated && (
+        <div className="md:hidden border-t border-neutral-800">
+          <div className="flex items-center gap-1 overflow-x-auto px-4 py-2 scrollbar-hide">
+            {featureNavItems.map((item) => {
+              const isActive = currentView === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setCurrentView(item.id as any)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                    isActive
+                      ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
+                      : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
+                  }`}
+                >
+                  <item.icon className="w-3.5 h-3.5" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </nav>
   );
 
   // Determine if we should show the navigation bar
   const showNavBar = currentView !== 'landing' && currentView !== 'upload' && currentView !== 'portfolio';
 
+  // Dynamic top padding based on nav height
+  const getTopPadding = () => {
+    if (!showNavBar) return '';
+    // Mobile with feature nav: 2 nav bars, regular: 1 nav bar
+    return portfolioGenerated ? 'pt-28 md:pt-20' : 'pt-20';
+  };
+
   return (
     <div className="min-h-screen">
       {showNavBar && <NavigationBar />}
 
-      {currentView === 'landing' && (
-        <LandingPage
-          onGetStarted={() => setCurrentView('upload')}
-          onViewExample={(data) => {
-            setPortfolioData(data);
-            setPortfolioGenerated(true);
-            setCurrentView('portfolio');
-          }}
-        />
-      )}
-      {currentView === 'upload' && (
-        <ResumeUpload
-          onResumeParsed={(data) => {
-            setResumeData(data);
-            setCurrentView('review');
+      <div className={getTopPadding()}>
+        {currentView === 'landing' && (
+          <LandingPage
+            onGetStarted={() => setCurrentView('upload')}
+            onViewExample={(data) => {
+              setPortfolioData(data);
+              setPortfolioGenerated(true);
+              setCurrentView('portfolio');
+            }}
+          />
+        )}
+        {currentView === 'upload' && (
+          <ResumeUpload
+            onResumeParsed={(data) => {
+              setResumeData(data);
+              setCurrentView('review');
           }}
           onManualEntry={() => setCurrentView('form')}
           onBack={() => setCurrentView('landing')}
@@ -1913,6 +2121,7 @@ function App() {
           onNavigateToResumeImprovement={() => setCurrentView('resume-improvement')}
         />
       )}
+      </div>
     </div>
   );
 }
