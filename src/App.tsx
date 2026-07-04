@@ -51,7 +51,7 @@ import LinkedInGenerator from './components/LinkedInGenerator';
 import ResumeImprovement from './components/ResumeImprovement';
 import SkillsAnalytics from './components/SkillsAnalytics';
 import ResultsDashboard from './components/ResultsDashboard';
-import { ResumeData, emptyResumeData } from './utils/resumeTypes';
+import { ResumeData, emptyResumeData, inferProfessionalTitle } from './utils/resumeTypes';
 
 interface Project {
   title: string;
@@ -1180,7 +1180,59 @@ interface PortfolioProps {
   onBackToDashboard?: () => void;
 }
 
-const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: PortfolioProps) => (
+/**
+ * Infers a professional title from portfolio data when role is empty
+ */
+const inferTitleFromPortfolio = (data: PortfolioData): string => {
+  if (data.role?.trim()) return data.role.trim();
+
+  const skillsLower = data.skills.map(s => s.toLowerCase());
+  const projectsText = data.projects.map(p => `${p.title} ${p.description} ${p.tech.join(' ')}`).join(' ').toLowerCase();
+
+  // Detect area of expertise
+  const isDataRelated = skillsLower.some(s =>
+    ['python', 'r', 'sql', 'pandas', 'numpy', 'machine learning', 'data analysis', 'data science', 'tableau', 'power bi', 'analytics'].some(t => s.includes(t))
+  ) || /data\s*(analyst|scientist|engineer)|machine\s*learning|analytics/.test(projectsText);
+
+  const isFrontend = skillsLower.some(s =>
+    ['react', 'vue', 'angular', 'javascript', 'typescript', 'css', 'html', 'tailwind', 'frontend', 'next.js', 'svelte'].some(t => s.includes(t))
+  ) || /frontend|web\s*developer|ui|ux/.test(projectsText);
+
+  const isBackend = skillsLower.some(s =>
+    ['node', 'express', 'django', 'flask', 'spring', 'java', 'golang', 'api', 'postgresql', 'mongodb', 'aws', 'docker', 'kubernetes'].some(t => s.includes(t))
+  ) || /backend|server|api|microservice/.test(projectsText);
+
+  const isFullStack = isFrontend && isBackend;
+
+  const isMobile = skillsLower.some(s =>
+    ['react native', 'flutter', 'swift', 'kotlin', 'android', 'ios', 'mobile'].some(t => s.includes(t))
+  ) || /mobile\s*developer|app\s*developer/.test(projectsText);
+
+  const isDevOps = skillsLower.some(s =>
+    ['docker', 'kubernetes', 'aws', 'azure', 'gcp', 'ci/cd', 'jenkins', 'terraform', 'devops'].some(t => s.includes(t))
+  ) || /devops|sre|infrastructure/.test(projectsText);
+
+  const isDesign = skillsLower.some(s =>
+    ['figma', 'sketch', 'adobe xd', 'ui design', 'ux design', 'product design', 'graphic design'].some(t => s.includes(t))
+  ) || /design|ui|ux/.test(projectsText);
+
+  // Generate title
+  if (isFullStack) return 'Full Stack Developer';
+  if (isFrontend) return 'Frontend Developer';
+  if (isBackend) return 'Backend Developer';
+  if (isDataRelated) return 'Data Analyst';
+  if (isMobile) return 'Mobile Developer';
+  if (isDevOps) return 'DevOps Engineer';
+  if (isDesign) return 'Product Designer';
+
+  if (data.skills.length > 0) return 'Software Developer';
+  return 'Professional';
+};
+
+const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: PortfolioProps) => {
+  const displayRole = inferTitleFromPortfolio(portfolioData);
+
+  return (
   <div className="min-h-screen relative bg-neutral-950">
     {/* Subtle grid */}
     <div
@@ -1255,7 +1307,7 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: Po
             {portfolioData.name || 'Your Name'}
           </h1>
           <p className="text-2xl md:text-3xl gradient-text font-display font-medium mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            {portfolioData.role || 'Your Role'}
+            {displayRole}
           </p>
 
           {/* Social Links */}
@@ -1458,7 +1510,8 @@ const Portfolio = ({ portfolioData, onEdit, onViewScore, onBackToDashboard }: Po
       </footer>
     </div>
   </div>
-);
+  );
+};
 
 // ============================================================================
 // MAIN APP
