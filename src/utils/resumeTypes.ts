@@ -128,6 +128,12 @@ export interface PortfolioData {
   github: string;
   linkedin: string;
   email: string;
+  phone: string;
+  location: string;
+  workExperience: WorkExperience[];
+  education: Education[];
+  certifications: Certification[];
+  achievements: Achievement[];
 }
 
 /**
@@ -254,5 +260,11 @@ export function resumeToPortfolioData(resume: ResumeData): PortfolioData {
     github: resume.githubUrl,
     linkedin: resume.linkedinUrl,
     email: resume.email,
+    phone: resume.phone,
+    location: resume.location,
+    workExperience: resume.workExperience,
+    education: resume.education,
+    certifications: resume.certifications,
+    achievements: resume.achievements,
   };
 }
