@@ -156,10 +156,10 @@ export function inferProfessionalTitle(resume: ResumeData): string {
   // 3. Infer from education, skills, and projects
   const skillsLower = resume.skills.map(s => s.toLowerCase());
   const allText = [
-    ...resume.education.map(e => `${e.degree} ${e.field}`).join(' '),
-    ...resume.skills.join(' '),
-    ...resume.projects.map(p => `${p.name} ${p.description} ${p.technologies.join(' ')}`).join(' '),
-  ].toLowerCase();
+    resume.education.map(e => `${e.degree} ${e.field}`).join(' '),
+    resume.skills.join(' '),
+    resume.projects.map(p => `${p.name} ${p.description} ${p.technologies.join(' ')}`).join(' '),
+  ].join(' ').toLowerCase();
 
   // Detect area of expertise
   const isDataRelated = skillsLower.some(s =>
