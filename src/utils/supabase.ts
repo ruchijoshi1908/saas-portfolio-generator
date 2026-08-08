@@ -7,6 +7,14 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
+ * The public origin used to build shareable portfolio URLs.
+ */
+export function getPublicAppUrl(): string {
+  const envUrl = import.meta.env.VITE_PUBLIC_APP_URL as string | undefined;
+  return (envUrl || 'https://saas-portfolio-gener-syu1.bolt.host').replace(/\/$/, '');
+}
+
+/**
  * Generate a short URL-safe slug (12 chars, lowercase alphanumeric).
  */
 export function generateSlug(): string {

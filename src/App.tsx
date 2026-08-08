@@ -52,7 +52,7 @@ import ResultsDashboard from './components/ResultsDashboard';
 import PortfolioView from './components/PortfolioView';
 import PublicPortfolio from './components/PublicPortfolio';
 import { ResumeData, emptyResumeData, PortfolioData as PortfolioDataType } from './utils/resumeTypes';
-import { savePortfolio } from './utils/supabase';
+import { savePortfolio, getPublicAppUrl } from './utils/supabase';
 
 // Re-export for local use
 type PortfolioData = PortfolioDataType;
@@ -1206,8 +1206,7 @@ function App() {
   // Persist the public slug across navigation so the share URL stays stable
   useEffect(() => {
     if (publicSlug) {
-      const baseUrl = window.location.origin;
-      setShareUrl(`${baseUrl}/portfolio/${publicSlug}`);
+      setShareUrl(`${getPublicAppUrl()}/portfolio/${publicSlug}`);
     }
   }, [publicSlug]);
 
@@ -1217,8 +1216,7 @@ function App() {
     try {
       const slug = await savePortfolio(data);
       setPublicSlug(slug);
-      const baseUrl = window.location.origin;
-      setShareUrl(`${baseUrl}/portfolio/${slug}`);
+      setShareUrl(`${getPublicAppUrl()}/portfolio/${slug}`);
     } catch (err) {
       console.error('Failed to save portfolio for sharing:', err);
     } finally {
