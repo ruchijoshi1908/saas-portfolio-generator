@@ -14,9 +14,6 @@ import {
   ArrowRight,
   CheckCircle2,
   ExternalLink,
-  FileText,
-  Image,
-  Printer,
 } from 'lucide-react';
 
 interface ResultsDashboardProps {
